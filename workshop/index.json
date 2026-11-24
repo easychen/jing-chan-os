@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-11-24T16:40:00+08:00",
+  "items": [
+    {
+      "id": "water-tracker",
+      "name": "深海喝水打卡",
+      "type": "miniapp",
+      "version": "1.0.0",
+      "author": "easychen",
+      "icon": "droplets",
+      "color": "#0EA5E9",
+      "repo": "https://github.com/easychen/jing-chan-os/tree/main/workshop/packages/water-tracker",
+      "description": "极简深海喝水记录，每天 8 杯水，小鲸陪你养成健康节律",
+      "permissions": [
+        "storage",
+        "ui.header",
+        "ui.notify"
+      ],
+      "tags": [
+        "健康",
+        "打卡"
+      ]
+    },
+    {
+      "id": "breathing-ocean",
+      "name": "深海呼吸引导",
+      "type": "miniapp",
+      "version": "1.0.0",
+      "author": "easychen",
+      "icon": "wind",
+      "color": "#14B8A6",
+      "repo": "https://github.com/easychen/jing-chan-os/tree/main/workshop/packages/breathing-ocean",
+      "description": "4-7-8 深海慢呼吸放松冥想，工作间隙 1 分钟平静心神",
+      "permissions": [
+        "storage",
+        "ui.header"
+      ],
+      "tags": [
+        "冥想",
+        "减压"
+      ]
+    },
+    {
+      "id": "daily-brief",
+      "name": "AI 科技早报整理",
+      "type": "skill",
+      "version": "1.0.0",
+      "author": "easychen",
+      "icon": "newspaper",
+      "color": "#6366F1",
+      "repo": "https://github.com/easychen/jing-chan-os/tree/main/workshop/packages/daily-brief-skill",
+      "description": "自动汇总今日 AI 与科技重点资讯，输出结构化 3 分钟速览早报",
+      "permissions": [],
+      "tags": [
+        "资讯",
+        "Skill"
+      ]
+    },
+    {
+      "id": "code-review-buddy",
+      "name": "深海代码审查官",
+      "type": "skill",
+      "version": "1.0.0",
+      "author": "easychen",
+      "icon": "git-pull-request",
+      "color": "#F59E0B",
+      "repo": "https://github.com/easychen/jing-chan-os/tree/main/workshop/packages/code-review-skill",
+      "description": "针对当前工作区 Git Diff 进行安全、性能与边界条件深度审查",
+      "permissions": [],
+      "tags": [
+        "开发",
+        "Skill"
+      ]
+    }
+  ]
+}

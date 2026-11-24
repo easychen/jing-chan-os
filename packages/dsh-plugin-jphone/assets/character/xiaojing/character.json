@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "id": "xiaojing",
+  "name": "小鲸同学",
+  "groupName": "鲸娘",
+  "tagline": "DeepSeek Harness 的温柔深海伴侣",
+  "proportions": "2-head-chibi",
+  "avatars": {
+    "neutral": "/jphone/assets/character/avatar_neutral.png",
+    "laugh": "/jphone/assets/character/avatar_laugh.png",
+    "working": "/jphone/assets/character/avatar_working.png",
+    "sleepy": "/jphone/assets/character/avatar_sleepy.png"
+  },
+  "sprites": {
+    "frameSize": [
+      256,
+      256
+    ],
+    "framesPerStrip": 4,
+    "standingHeightPx": 192,
+    "footBaselineY": 242,
+    "idle": "/jphone/assets/character/sprites/sprite_idle.png",
+    "idle_sway": "/jphone/assets/character/sprites/sprite_idle_sway.png",
+    "idle_hair": "/jphone/assets/character/sprites/sprite_idle_hair.png",
+    "idle_pose": "/jphone/assets/character/sprites/sprite_idle_pose.png",
+    "idle_drowsy": "/jphone/assets/character/sprites/sprite_idle_drowsy.png",
+    "idle_look": "/jphone/assets/character/sprites/sprite_idle_look.png",
+    "happy": "/jphone/assets/character/sprites/sprite_happy.png",
+    "working": "/jphone/assets/character/sprites/sprite_working.png",
+    "sleepy": "/jphone/assets/character/sprites/sprite_sleepy.png",
+    "tea": "/jphone/assets/character/sprites/sprite_tea.png",
+    "music": "/jphone/assets/character/sprites/sprite_music.png",
+    "wave": "/jphone/assets/character/sprites/sprite_wave.png",
+    "walk": "/jphone/assets/character/sprites/sprite_walk.png",
+    "walk_up": "/jphone/assets/character/sprites/sprite_walk_up.png",
+    "walk_down": "/jphone/assets/character/sprites/sprite_walk_down.png",
+    "walk_ur": "/jphone/assets/character/sprites/sprite_walk_ur.png",
+    "walk_dr": "/jphone/assets/character/sprites/sprite_walk_dr.png"
+  },
+  "lav": {
+    "codec": "vp9-alpha",
+    "idle": "/jphone/media/lav/xiaojing/xiaojing_idle.webm",
+    "tea": "/jphone/media/lav/xiaojing/xiaojing_tea.webm",
+    "music": "/jphone/media/lav/xiaojing/xiaojing_music.webm",
+    "touch_head": "/jphone/media/lav/xiaojing/xiaojing_touch_head.webm",
+    "touch_body": "/jphone/media/lav/xiaojing/xiaojing_touch_body.webm",
+    "touch_tail": "/jphone/media/lav/xiaojing/xiaojing_touch_tail.webm",
+    "touchZones": [
+      "head",
+      "body",
+      "tail"
+    ],
+    "desk": "/jphone/media/lav/xiaojing/xiaojing_desk.webm",
+    "glance": "/jphone/media/lav/xiaojing/xiaojing_glance.webm",
+    "sit": "/jphone/media/lav/xiaojing/xiaojing_sit.webm"
+  },
+  "voices": [
+    {
+      "id": "stella",
+      "label": "星河 · 温柔",
+      "default": true
+    },
+    {
+      "id": "nova",
+      "label": "清澈 · 元气"
+    },
+    {
+      "id": "alloy",
+      "label": "自然 · 陪伴"
+    }
+  ]
+}

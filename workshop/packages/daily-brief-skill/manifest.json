@@ -1,0 +1,17 @@
+{
+  "id": "daily-brief",
+  "name": "AI 科技早报整理",
+  "type": "skill",
+  "version": "1.0.0",
+  "entry": "SKILL.md",
+  "icon": "newspaper",
+  "color": "#6366F1",
+  "author": "easychen",
+  "description": "自动汇总今日 AI 与科技重点资讯，输出结构化 3 分钟速览早报",
+  "permissions": [],
+  "tags": [
+    "资讯",
+    "效率",
+    "Skill"
+  ]
+}

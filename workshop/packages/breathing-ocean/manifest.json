@@ -1,0 +1,20 @@
+{
+  "id": "breathing-ocean",
+  "name": "深海呼吸引导",
+  "type": "miniapp",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "icon": "wind",
+  "color": "#14B8A6",
+  "author": "easychen",
+  "description": "4-7-8 深海慢呼吸放松冥想，工作间隙 1 分钟平静心神",
+  "permissions": [
+    "storage",
+    "ui.header"
+  ],
+  "tags": [
+    "冥想",
+    "减压",
+    "官方示范"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "code-review-buddy",
+  "name": "深海代码审查官",
+  "type": "skill",
+  "version": "1.0.0",
+  "entry": "SKILL.md",
+  "icon": "git-pull-request",
+  "color": "#F59E0B",
+  "author": "easychen",
+  "description": "针对当前工作区 Git Diff 进行安全、性能与边界条件深度审查",
+  "permissions": [],
+  "tags": [
+    "开发",
+    "CodeReview",
+    "Skill"
+  ]
+}

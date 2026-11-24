@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="/jphone/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="小鲸同学 (JingChan) — Project JPhone">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="小鲸同学">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>小鲸同学 · JingChan</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <script>
+    (function () {
+      // ---- Audio Playback (with instant interruptible promise resolution) ----
+      let activeAudio = null;
+      let activeUrl = null;
+      let activeResolve = null;
+
+      function stopAudio() {
+        try {
+          if (activeAudio) {
+            activeAudio.onended = null;
+            activeAudio.onerror = null;
+            activeAudio.pause();
+            activeAudio.src = '';
+            activeAudio = null;
+          }
+          if (activeUrl) {
+            URL.revokeObjectURL(activeUrl);
+            activeUrl = null;
+          }
+          if (activeResolve) {
+            const fn = activeResolve;
+            activeResolve = null;
+            fn(false);
+          }
+        } catch (_) {}
+      }
+
+      function playBase64Wav(base64) {
+        stopAudio();
+        if (!base64) return Promise.resolve(false);
+        return new Promise((resolve) => {
+          try {
+            const bin = atob(base64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const blob = new Blob([bytes], { type: 'audio/wav' });
+            activeUrl = URL.createObjectURL(blob);
+            const audio = new Audio(activeUrl);
+            activeAudio = audio;
+            activeResolve = resolve;
+            const done = (ok) => {
+              if (activeAudio === audio) {
+                activeAudio = null;
+                if (activeUrl) {
+                  URL.revokeObjectURL(activeUrl);
+                  activeUrl = null;
+                }
+                const fn = activeResolve;
+                activeResolve = null;
+                if (fn) fn(ok);
+              }
+            };
+            audio.onended = () => done(true);
+            audio.onerror = () => done(false);
+            const p = audio.play();
+            if (p && typeof p.catch === 'function') {
+              p.catch(() => done(false));
+            }
+          } catch (_) {
+            resolve(false);
+          }
+        });
+      }
+
+      // ---- Shared PCM16 WAV helpers ----
+      function downsampleTo16k(chunks, inRate) {
+        let totalLen = 0;
+        for (const c of chunks) totalLen += c.length;
+        const merged = new Float32Array(totalLen);
+        let offset = 0;
+        for (const c of chunks) {
+          merged.set(c, offset);
+          offset += c.length;
+        }
+        const outRate = 16000;
+        if (inRate <= outRate) return { samples: merged, sampleRate: inRate };
+        const ratio = inRate / outRate;
+        const outLen = Math.max(1, Math.floor(merged.length / ratio));
+        const out = new Float32Array(outLen);
+        for (let i = 0; i < outLen; i++) {
+          const start = Math.floor(i * ratio);
+          const end = Math.min(merged.length, Math.floor((i + 1) * ratio));
+          let sum = 0;
+          let count = 0;
+          for (let j = start; j < end; j++) {
+            sum += merged[j];
+            count++;
+          }
+          out[i] = count > 0 ? sum / count : 0;
+        }
+        return { samples: out, sampleRate: outRate };
+      }
+
+      function encodeWavBase64(samples, sampleRate) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+        const writeStr = (off, s) => {
+          for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+        };
+        writeStr(0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeStr(8, 'WAVE');
+        writeStr(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeStr(36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+        let off = 44;
+        for (let i = 0; i < samples.length; i++) {
+          const s = Math.max(-1, Math.min(1, samples[i]));
+          view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+          off += 2;
+        }
+        const bytes = new Uint8Array(buffer);
+        let bin = '';
+        const chunk = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+        }
+        return btoa(bin);
+      }
+
+      async function listAudioInputs() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return '[]';
+        try {
+          const devs = await navigator.mediaDevices.enumerateDevices();
+          const inputs = devs
+            .filter((d) => d.kind === 'audioinput')
+            .map((d, idx) => ({
+              id: d.deviceId || '',
+              label: d.label || ('麦克风 ' + (idx + 1)),
+            }));
+          return JSON.stringify(inputs);
+        } catch (_) {
+          return '[]';
+        }
+      }
+
+      // ---- Full-Duplex Continuous Call Engine (WebRTC AEC + Pre-Roll + Adaptive VAD + Voice Barge-in) ----
+      let callStream = null;
+      let callCtx = null;
+      let callSource = null;
+      let callProc = null;
+      let callMuteGain = null;
+      let callSampleRate = 48000;
+      let callActive = false;
+      let callMuted = false;
+      let callBusyThinking = false;
+      let callAgentSpeaking = false;
+      let callAgentSpeakingSinceMs = 0;
+      let callAecEnabled = false;
+      let callActiveMicLabel = '';
+      let callLevel = 0;
+      let callNoiseFloor = 0.008;
+      let callBargeInCount = 0;
+      let callBargeVoiceMs = 0;
+
+      // Utterance state + ~500ms circular pre-roll
+      let preRollChunks = [];
+      const MAX_PREROLL_CHUNKS = 6;
+      let uttInSpeech = false;
+      let uttBuffers = [];
+      let uttStartMs = 0;
+      let uttSpeechMs = 0;
+      let uttOnsetMs = 0;
+      let uttLastVoiceMs = 0;
+      let uttPeak = 0;
+      let uttBargeIn = false;
+      let readyUtterance = null;
+
+      function resetUtteranceBuffers() {
+        uttInSpeech = false;
+        uttBuffers = [];
+        uttStartMs = 0;
+        uttSpeechMs = 0;
+        uttOnsetMs = 0;
+        uttLastVoiceMs = 0;
+        uttPeak = 0;
+        uttBargeIn = false;
+        callBargeVoiceMs = 0;
+      }
+
+      function finalizeCurrentUtterance(now) {
+        if (!uttBuffers.length) {
+          resetUtteranceBuffers();
+          return;
+        }
+        const { samples, sampleRate } = downsampleTo16k(uttBuffers, callSampleRate);
+        const durationMs = uttStartMs ? Math.max(0, now - uttStartMs) : 0;
+        const peak = uttPeak;
+        const bargeIn = uttBargeIn;
+        resetUtteranceBuffers();
+        preRollChunks = [];
+        if (samples.length < 2000) return;
+        const base64 = encodeWavBase64(samples, sampleRate);
+        readyUtterance = {
+          base64,
+          peak,
+          durationMs,
+          micLabel: callActiveMicLabel,
+          bargeIn,
+        };
+      }
+
+      async function stopCallSession() {
+        callActive = false;
+        callAgentSpeaking = false;
+        callBusyThinking = false;
+        callLevel = 0;
+        readyUtterance = null;
+        preRollChunks = [];
+        resetUtteranceBuffers();
+        try {
+          if (callProc) callProc.disconnect();
+          if (callSource) callSource.disconnect();
+          if (callMuteGain) callMuteGain.disconnect();
+          if (callStream) callStream.getTracks().forEach((t) => t.stop());
+          if (callCtx) await callCtx.close().catch(() => {});
+        } catch (_) {}
+        callProc = null;
+        callSource = null;
+        callMuteGain = null;
+        callStream = null;
+        callCtx = null;
+      }
+
+      async function startCallSession(deviceId) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+        await stopCallSession();
+        try {
+          const audioConstraints = {
+            echoCancellation: { ideal: true },
+            noiseSuppression: { ideal: true },
+            autoGainControl: { ideal: true },
+            channelCount: { ideal: 1 },
+          };
+          if (deviceId && typeof deviceId === 'string' && deviceId.length > 0) {
+            audioConstraints.deviceId = { exact: deviceId };
+          }
+          callStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+          const track = callStream.getAudioTracks()[0];
+          callActiveMicLabel = (track && track.label) ? track.label : '默认麦克风';
+          try {
+            const settings = track && track.getSettings ? track.getSettings() : {};
+            callAecEnabled = settings.echoCancellation !== false;
+          } catch (_) {
+            callAecEnabled = true;
+          }
+
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          callCtx = new AudioCtx();
+          if (callCtx.state === 'suspended') {
+            await callCtx.resume().catch(() => {});
+          }
+          callSampleRate = callCtx.sampleRate || 48000;
+          callNoiseFloor = 0.008;
+          callMuted = false;
+          callBusyThinking = false;
+          callAgentSpeaking = false;
+          readyUtterance = null;
+          preRollChunks = [];
+          resetUtteranceBuffers();
+
+          callSource = callCtx.createMediaStreamSource(callStream);
+          callProc = callCtx.createScriptProcessor(4096, 1, 1);
+          callMuteGain = callCtx.createGain();
+          callMuteGain.gain.value = 0;
+
+          callProc.onaudioprocess = (ev) => {
+            if (!callActive) return;
+            const input = ev.inputBuffer.getChannelData(0);
+            if (callMuted) {
+              callLevel = 0;
+              return;
+            }
+            const copy = new Float32Array(input);
+            let sumSq = 0;
+            let framePeak = 0;
+            for (let i = 0; i < copy.length; i++) {
+              const v = Math.abs(copy[i]);
+              if (v > framePeak) framePeak = v;
+              sumSq += copy[i] * copy[i];
+            }
+            const rms = Math.sqrt(sumSq / Math.max(1, copy.length));
+            callLevel = Math.min(1, rms * 7.5);
+            const now = Date.now();
+            const frameMs = (copy.length / Math.max(8000, callSampleRate)) * 1000;
+
+            // Keep rolling ~500ms pre-roll buffer so speech onset is never clipped
+            preRollChunks.push(copy);
+            if (preRollChunks.length > MAX_PREROLL_CHUNKS) preRollChunks.shift();
+
+            // Case 1: Agent is currently speaking -> Monitor for Full-Duplex Voice Barge-in (with WebRTC AEC)
+            if (callAgentSpeaking) {
+              if (now - callAgentSpeakingSinceMs < 350) return;
+              const bargeThresh = Math.max(0.038, callNoiseFloor * 3.8);
+              const isBargeVoice = rms > bargeThresh || framePeak > 0.14;
+              if (isBargeVoice) {
+                callBargeVoiceMs += frameMs;
+              } else {
+                callBargeVoiceMs = Math.max(0, callBargeVoiceMs - frameMs * 0.7);
+              }
+              if (callBargeVoiceMs >= 260) {
+                // Instant voice barge-in! Stop TTS immediately and seamlessly capture user's interrupting utterance
+                stopAudio();
+                callAgentSpeaking = false;
+                callBusyThinking = false;
+                callBargeInCount++;
+                readyUtterance = null;
+                uttInSpeech = true;
+                uttBargeIn = true;
+                uttBuffers = preRollChunks.slice();
+                uttStartMs = now - Math.round(preRollChunks.length * frameMs);
+                uttLastVoiceMs = now;
+                uttSpeechMs = callBargeVoiceMs;
+                uttPeak = framePeak;
+                callBargeVoiceMs = 0;
+              }
+              return;
+            }
+
+            // Case 2: Waiting for ASR/LLM response (keep AEC stream warm, pause new utterance trigger)
+            if (callBusyThinking || readyUtterance) {
+              return;
+            }
+
+            // Case 3: Hands-free continuous listening with adaptive noise floor
+            const voiceThresh = Math.max(0.017, callNoiseFloor * 2.4);
+            const isVoice = rms > voiceThresh || framePeak > 0.055;
+
+            if (!uttInSpeech) {
+              if (isVoice) {
+                uttOnsetMs += frameMs;
+                if (uttOnsetMs >= 140) {
+                  uttInSpeech = true;
+                  uttBargeIn = false;
+                  uttBuffers = preRollChunks.slice();
+                  uttStartMs = now - Math.round(preRollChunks.length * frameMs);
+                  uttLastVoiceMs = now;
+                  uttSpeechMs = uttOnsetMs;
+                  uttPeak = framePeak;
+                }
+              } else {
+                uttOnsetMs = Math.max(0, uttOnsetMs - frameMs * 0.8);
+                callNoiseFloor = Math.max(0.004, Math.min(0.028, callNoiseFloor * 0.96 + rms * 0.04));
+              }
+            } else {
+              uttBuffers.push(copy);
+              if (framePeak > uttPeak) uttPeak = framePeak;
+              if (isVoice) {
+                uttSpeechMs += frameMs;
+                uttLastVoiceMs = now;
+              }
+              const silenceMs = now - uttLastVoiceMs;
+              const elapsedMs = now - uttStartMs;
+              if ((uttSpeechMs >= 240 && silenceMs >= 1300) || elapsedMs >= 20000) {
+                finalizeCurrentUtterance(now);
+              }
+            }
+          };
+
+          callSource.connect(callProc);
+          callProc.connect(callMuteGain);
+          callMuteGain.connect(callCtx.destination);
+          callActive = true;
+          return true;
+        } catch (_) {
+          await stopCallSession();
+          return false;
+        }
+      }
+
+      function setCallMuted(muted) {
+        callMuted = !!muted;
+        if (callMuted) {
+          callLevel = 0;
+          resetUtteranceBuffers();
+        }
+      }
+
+      function setCallBusy(busy) {
+        callBusyThinking = !!busy;
+        if (callBusyThinking) {
+          resetUtteranceBuffers();
+        }
+      }
+
+      function setAgentSpeaking(speaking) {
+        callAgentSpeaking = !!speaking;
+        callBargeVoiceMs = 0;
+        if (callAgentSpeaking) {
+          callAgentSpeakingSinceMs = Date.now();
+          resetUtteranceBuffers();
+        }
+      }
+
+      function getCallState() {
+        return JSON.stringify({
+          active: callActive,
+          muted: callMuted,
+          agentSpeaking: callAgentSpeaking,
+          inSpeech: uttInSpeech,
+          hasUtterance: !!readyUtterance,
+          bargeInCount: callBargeInCount,
+          level: callLevel,
+          aecEnabled: callAecEnabled,
+          micLabel: callActiveMicLabel,
+        });
+      }
+
+      function consumeUtterance() {
+        const u = readyUtterance;
+        readyUtterance = null;
+        if (!u) return JSON.stringify({ base64: '', peak: 0, durationMs: 0, micLabel: callActiveMicLabel, bargeIn: false });
+        return JSON.stringify(u);
+      }
+
+      // ---- Legacy single-turn recording API (backward compatibility) ----
+      let recStream = null;
+      let recCtx = null;
+      let recSource = null;
+      let recProc = null;
+      let recMuteGain = null;
+      let recBuffers = [];
+      let recSampleRate = 48000;
+      let recActiveMicLabel = '';
+      let recStartMs = 0;
+      let recCurrentLevel = 0;
+      let recPeak = 0;
+      let vadHeardSpeech = false;
+      let vadSpeechMs = 0;
+      let vadLastVoiceMs = 0;
+
+      async function startRecording(deviceId) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return false;
+        stopAudio();
+        try {
+          const audioConstraints = {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          };
+          if (deviceId && typeof deviceId === 'string' && deviceId.length > 0) {
+            audioConstraints.deviceId = { exact: deviceId };
+          }
+          recStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+          const track = recStream.getAudioTracks()[0];
+          recActiveMicLabel = (track && track.label) ? track.label : '默认麦克风';
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          recCtx = new AudioCtx();
+          if (recCtx.state === 'suspended') await recCtx.resume().catch(() => {});
+          recSampleRate = recCtx.sampleRate || 48000;
+          recBuffers = [];
+          recStartMs = Date.now();
+          recCurrentLevel = 0;
+          recPeak = 0;
+          vadHeardSpeech = false;
+          vadSpeechMs = 0;
+          vadLastVoiceMs = 0;
+          recSource = recCtx.createMediaStreamSource(recStream);
+          recProc = recCtx.createScriptProcessor(4096, 1, 1);
+          recMuteGain = recCtx.createGain();
+          recMuteGain.gain.value = 0;
+          recProc.onaudioprocess = (ev) => {
+            const input = ev.inputBuffer.getChannelData(0);
+            const copy = new Float32Array(input);
+            recBuffers.push(copy);
+            let sumSq = 0;
+            let framePeak = 0;
+            for (let i = 0; i < copy.length; i++) {
+              const v = Math.abs(copy[i]);
+              if (v > framePeak) framePeak = v;
+              sumSq += copy[i] * copy[i];
+            }
+            const rms = Math.sqrt(sumSq / Math.max(1, copy.length));
+            if (framePeak > recPeak) recPeak = framePeak;
+            recCurrentLevel = Math.min(1, rms * 7.5);
+            const now = Date.now();
+            const frameMs = (copy.length / Math.max(8000, recSampleRate)) * 1000;
+            if (framePeak > 0.065 || rms > 0.022) {
+              vadSpeechMs += frameMs;
+              vadLastVoiceMs = now;
+              if (vadSpeechMs >= 160) vadHeardSpeech = true;
+            }
+          };
+          recSource.connect(recProc);
+          recProc.connect(recMuteGain);
+          recMuteGain.connect(recCtx.destination);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      async function stopRecordingWithMeta() {
+        try {
+          if (recProc) recProc.disconnect();
+          if (recSource) recSource.disconnect();
+          if (recMuteGain) recMuteGain.disconnect();
+          if (recStream) recStream.getTracks().forEach((t) => t.stop());
+          if (recCtx) await recCtx.close().catch(() => {});
+        } catch (_) {}
+        const chunks = recBuffers;
+        const rate = recSampleRate;
+        const peak = recPeak;
+        const micLabel = recActiveMicLabel;
+        const durationMs = recStartMs ? (Date.now() - recStartMs) : 0;
+        recProc = recSource = recMuteGain = recStream = recCtx = null;
+        recBuffers = [];
+        recCurrentLevel = 0;
+        vadHeardSpeech = false;
+        vadSpeechMs = 0;
+        vadLastVoiceMs = 0;
+        if (!chunks.length) return JSON.stringify({ base64: '', peak, durationMs, micLabel });
+        const { samples, sampleRate } = downsampleTo16k(chunks, rate);
+        if (samples.length < 1600) return JSON.stringify({ base64: '', peak, durationMs, micLabel });
+        return JSON.stringify({ base64: encodeWavBase64(samples, sampleRate), peak, durationMs, micLabel });
+      }
+
+
+      // ---- Host-Level Persistent Background Audio Engine (survives Mini-App exit!) ----
+      const DEFAULT_LOFI_QUEUE = [
+        { id: 'lofi-rain-a', title: '雨的假设 A', subtitle: '回声重映集 · Hypothesis of Rain A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_01_雨的假设A_Hypothesis_of_Rain.mp3') },
+        { id: 'lofi-leaves-a', title: '叶的呼吸 A', subtitle: '回声重映集 · Respiration of Leaves A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_03_叶的呼吸A_Respiration_of_Leaves.mp3') },
+        { id: 'lofi-waves-a', title: '浪的层叠 A', subtitle: '回声重映集 · Folding the Waves A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_05_浪的层叠A_Folding_the_Waves.mp3') },
+        { id: 'lofi-embers-a', title: '篝火余烬 A', subtitle: '回声重映集 · Embers of Civilization A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_07_篝火余烬A_Embers_of_Civilization.mp3') },
+        { id: 'lofi-stars-a', title: '星空幻梦 A', subtitle: '回声重映集 · Echoes from Light Years A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_11_星空幻梦A_Echoes_from_Light_Years.mp3') },
+        { id: 'lofi-cafe-a', title: '午夜咖啡馆 A', subtitle: '回声重映集 · Solace in Third Space A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_17_午夜咖啡馆A_Solace_in_Third_Space.mp3') },
+      ];
+      let bgTrackEl = null;
+      let bgTrackMeta = null;
+      const bgNoises = new Map(); // id -> { el, name, url, volume, active }
+      let bgPlaying = false;
+      let bgSceneName = '';
+      const bgListeners = new Set();
+
+      function emitMedia() {
+        const snap = getMediaStateObj();
+        bgListeners.forEach((fn) => { try { fn(snap); } catch (_) {} });
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'jphone:media',
+              playing: !!snap.playing,
+              hasActiveAudio: !!snap.hasActiveAudio,
+              title: snap.title || '',
+              sceneName: snap.sceneName || '',
+            }, '*');
+          }
+        } catch (_) {}
+      }
+
+      function getMediaStateObj() {
+        const noises = {};
+        let noiseCount = 0;
+        bgNoises.forEach((entry, id) => {
+          if (entry.active) {
+            noiseCount++;
+            noises[id] = { id, name: entry.name, volume: entry.volume, active: true };
+          }
+        });
+        const hasActiveAudio = !!bgTrackMeta || noiseCount > 0;
+        const activeNames = Object.values(noises).map((n) => n.name);
+        const displayTitle = bgTrackMeta
+          ? bgTrackMeta.title
+          : (activeNames.length > 0 ? ('白噪音 · ' + activeNames.slice(0, 2).join('+')) : '');
+        const displaySub = bgTrackMeta && activeNames.length > 0
+          ? ('混音: ' + activeNames.slice(0, 3).join(' + '))
+          : (bgTrackMeta ? (bgTrackMeta.subtitle || '小鲸专注') : (bgSceneName || '小鲸专注'));
+        return {
+          playing: bgPlaying && hasActiveAudio,
+          hasActiveAudio,
+          title: displayTitle,
+          subtitle: displaySub,
+          sceneName: bgSceneName,
+          track: bgTrackMeta,
+          noises,
+          noiseCount,
+        };
+      }
+
+      function playBgTrack(meta) {
+        if (!meta || !meta.url) return;
+        if (bgTrackEl) {
+          bgTrackEl.pause();
+          bgTrackEl.src = '';
+          bgTrackEl = null;
+        }
+        const a = new Audio(meta.url);
+        a.loop = true;
+        a.volume = 0.56;
+        a.play().catch(() => {});
+        bgTrackEl = a;
+        bgTrackMeta = { id: meta.id || '', title: meta.title || 'Lo-Fi', subtitle: meta.subtitle || '', url: meta.url };
+        bgPlaying = true;
+        // Also resume any active noises
+        bgNoises.forEach((n) => { if (n.active) n.el.play().catch(() => {}); });
+        emitMedia();
+      }
+
+      function pauseBgTrack() {
+        bgPlaying = false;
+        if (bgTrackEl) bgTrackEl.pause();
+        bgNoises.forEach((n) => n.el.pause());
+        emitMedia();
+      }
+
+      function toggleBgPlay() {
+        const st = getMediaStateObj();
+        if (!st.hasActiveAudio) {
+          playBgTrack(DEFAULT_LOFI_QUEUE[0]);
+          return;
+        }
+        if (bgPlaying) {
+          pauseBgTrack();
+        } else {
+          bgPlaying = true;
+          if (bgTrackEl) bgTrackEl.play().catch(() => {});
+          bgNoises.forEach((n) => { if (n.active) n.el.play().catch(() => {}); });
+          emitMedia();
+        }
+      }
+
+      function nextBgTrack() {
+        const curId = bgTrackMeta ? bgTrackMeta.id : '';
+        const idx = DEFAULT_LOFI_QUEUE.findIndex((t) => t.id === curId);
+        const next = DEFAULT_LOFI_QUEUE[(idx + 1) % DEFAULT_LOFI_QUEUE.length];
+        playBgTrack(next);
+      }
+
+      function setBgNoise(id, opts) {
+        if (!id) return;
+        const o = opts || {};
+        const active = !!o.active;
+        const vol = Math.max(0, Math.min(1, Number(o.volume ?? 0.5)));
+        let entry = bgNoises.get(id);
+        if (active) {
+          if (!entry) {
+            const el = new Audio(o.url || '');
+            el.loop = true;
+            entry = { el, name: o.name || id, url: o.url || '', volume: vol, active: true };
+            bgNoises.set(id, entry);
+          } else {
+            entry.active = true;
+            entry.volume = vol;
+            if (o.name) entry.name = o.name;
+          }
+          entry.el.volume = vol;
+          bgPlaying = true;
+          entry.el.play().catch(() => {});
+          if (bgTrackEl) bgTrackEl.play().catch(() => {});
+        } else if (entry) {
+          entry.active = false;
+          entry.el.pause();
+        }
+        emitMedia();
+      }
+
+      function applyBgScene(scene) {
+        if (!scene) return;
+        bgSceneName = scene.sceneName || '';
+        bgNoises.forEach((n) => { n.active = false; n.el.pause(); });
+        if (Array.isArray(scene.noises)) {
+          for (const item of scene.noises) {
+            setBgNoise(item.id, { ...item, active: true });
+          }
+        }
+        if (scene.track && scene.track.url) {
+          playBgTrack(scene.track);
+        } else {
+          emitMedia();
+        }
+      }
+
+      function stopBgAll() {
+        bgPlaying = false;
+        bgSceneName = '';
+        if (bgTrackEl) { bgTrackEl.pause(); bgTrackEl.src = ''; bgTrackEl = null; }
+        bgTrackMeta = null;
+        bgNoises.forEach((n) => { n.active = false; n.el.pause(); });
+        bgNoises.clear();
+        emitMedia();
+      }
+
+      let bgDuckedForCall = false;
+      function duckForCall() {
+        const st = getMediaStateObj();
+        if (st.playing) {
+          bgDuckedForCall = true;
+          pauseBgTrack();
+        }
+      }
+      function unduckFromCall() {
+        if (bgDuckedForCall) {
+          bgDuckedForCall = false;
+          const st = getMediaStateObj();
+          if (st.hasActiveAudio && !st.playing) {
+            toggleBgPlay();
+          }
+        }
+      }
+
+      window.__jphoneMedia = {
+        getStateObj: getMediaStateObj,
+        getStateJson: () => JSON.stringify(getMediaStateObj()),
+        playTrack: playBgTrack,
+        pauseTrack: pauseBgTrack,
+        togglePlay: toggleBgPlay,
+        nextTrack: nextBgTrack,
+        setNoise: setBgNoise,
+        applyScene: applyBgScene,
+        stopAll: stopBgAll,
+        duckForCall,
+        unduckFromCall,
+        subscribe: (fn) => { bgListeners.add(fn); return () => bgListeners.delete(fn); },
+      };
+
+      // ---- M3: Host-level persistent Pomodoro timer (survives Mini-App exit!) ----
+      const focusListeners = new Set();
+      let focusState = {
+        running: false,
+        phase: 'focus', // 'focus' | 'break'
+        cycle: 1,
+        focusMin: 25,
+        breakMin: 5,
+        pauseOnBreak: true,
+        totalSec: 25 * 60,
+        remainSec: 25 * 60,
+        completedCount: 0,
+        todayMinutes: 0,
+        endsAt: 0,
+        seeded: false,
+      };
+      let focusTickId = null;
+
+      function getFocusAuthHeaders() {
+        const h = { 'content-type': 'application/json' };
+        try {
+          const tk = new URLSearchParams(location.search).get('token');
+          if (tk) h['x-jphone-token'] = tk;
+        } catch (_) {}
+        return h;
+      }
+
+      function getFocusStateObj() {
+        const remain = focusState.running && focusState.endsAt > 0
+          ? Math.max(0, Math.ceil((focusState.endsAt - Date.now()) / 1000))
+          : focusState.remainSec;
+        return {
+          running: focusState.running,
+          phase: focusState.phase,
+          cycle: focusState.cycle,
+          focusMin: focusState.focusMin,
+          breakMin: focusState.breakMin,
+          pauseOnBreak: focusState.pauseOnBreak,
+          totalSec: focusState.totalSec,
+          remainSec: remain,
+          completedCount: focusState.completedCount,
+          todayMinutes: focusState.todayMinutes,
+          active: focusState.running || (focusState.remainSec < focusState.totalSec && focusState.remainSec > 0),
+        };
+      }
+
+      function emitFocus() {
+        const snap = getFocusStateObj();
+        focusListeners.forEach((fn) => { try { fn(snap); } catch (_) {} });
+      }
+
+      function onFocusPhaseCompleted() {
+        if (focusState.phase === 'focus') {
+          focusState.completedCount += 1;
+          focusState.todayMinutes += focusState.focusMin;
+          const minsJustDone = focusState.focusMin;
+          const totalDone = focusState.completedCount;
+          const totalMins = focusState.todayMinutes;
+          focusState.phase = 'break';
+          focusState.totalSec = focusState.breakMin * 60;
+          focusState.remainSec = focusState.totalSec;
+          focusState.endsAt = Date.now() + focusState.totalSec * 1000;
+          if (focusState.pauseOnBreak && getMediaStateObj().playing) {
+            pauseBgTrack();
+          }
+          // Persist stats & notify ServerChan
+          try {
+            fetch('/jphone/api/miniapps/jing-focus/kv/stats', {
+              method: 'PUT',
+              headers: getFocusAuthHeaders(),
+              body: JSON.stringify({ value: { totalMinutes: totalMins, totalPomodoros: totalDone } }),
+            }).catch(() => {});
+            fetch('/jphone/api/notify/event', {
+              method: 'POST',
+              headers: getFocusAuthHeaders(),
+              body: JSON.stringify({
+                eventType: 'focus_done',
+                title: '🍅 小鲸专注完成一轮！',
+                body: '刚完成 ' + minsJustDone + ' 分钟深度专注，今日累计 ' + totalMins + ' 分钟（' + totalDone + ' 轮），起来伸个懒腰吧～',
+              }),
+            }).catch(() => {});
+          } catch (_) {}
+        } else {
+          focusState.phase = 'focus';
+          focusState.cycle = (focusState.cycle % 4) + 1;
+          focusState.totalSec = focusState.focusMin * 60;
+          focusState.remainSec = focusState.totalSec;
+          focusState.endsAt = Date.now() + focusState.totalSec * 1000;
+        }
+        emitFocus();
+      }
+
+      function ensureFocusTicker() {
+        if (focusTickId) return;
+        focusTickId = setInterval(() => {
+          if (!focusState.running) {
+            clearInterval(focusTickId);
+            focusTickId = null;
+            return;
+          }
+          const left = Math.max(0, Math.ceil((focusState.endsAt - Date.now()) / 1000));
+          focusState.remainSec = left;
+          if (left <= 0) {
+            onFocusPhaseCompleted();
+          } else {
+            emitFocus();
+          }
+        }, 500);
+      }
+
+      window.__jphoneFocus = {
+        getStateObj: getFocusStateObj,
+        getStateJson: () => JSON.stringify(getFocusStateObj()),
+        seed(cfg) {
+          if (!cfg || focusState.seeded) return getFocusStateObj();
+          focusState.seeded = true;
+          if (typeof cfg.focusMin === 'number') focusState.focusMin = cfg.focusMin;
+          if (typeof cfg.breakMin === 'number') focusState.breakMin = cfg.breakMin;
+          if (typeof cfg.pauseOnBreak === 'boolean') focusState.pauseOnBreak = cfg.pauseOnBreak;
+          if (typeof cfg.completedCount === 'number') focusState.completedCount = cfg.completedCount;
+          if (typeof cfg.todayMinutes === 'number') focusState.todayMinutes = cfg.todayMinutes;
+          if (!focusState.running) {
+            focusState.totalSec = focusState.focusMin * 60;
+            focusState.remainSec = focusState.totalSec;
+          }
+          emitFocus();
+          return getFocusStateObj();
+        },
+        start() {
+          if (focusState.running) return getFocusStateObj();
+          focusState.running = true;
+          focusState.endsAt = Date.now() + Math.max(1, focusState.remainSec) * 1000;
+          ensureFocusTicker();
+          emitFocus();
+          return getFocusStateObj();
+        },
+        pause() {
+          if (!focusState.running) return getFocusStateObj();
+          focusState.remainSec = Math.max(0, Math.ceil((focusState.endsAt - Date.now()) / 1000));
+          focusState.running = false;
+          focusState.endsAt = 0;
+          if (focusTickId) { clearInterval(focusTickId); focusTickId = null; }
+          emitFocus();
+          return getFocusStateObj();
+        },
+        toggle() {
+          return focusState.running ? this.pause() : this.start();
+        },
+        reset() {
+          focusState.running = false;
+          focusState.endsAt = 0;
+          if (focusTickId) { clearInterval(focusTickId); focusTickId = null; }
+          focusState.phase = 'focus';
+          focusState.totalSec = focusState.focusMin * 60;
+          focusState.remainSec = focusState.totalSec;
+          emitFocus();
+          return getFocusStateObj();
+        },
+        setDurations(opts) {
+          if (!opts) return getFocusStateObj();
+          if (typeof opts.focusMin === 'number') {
+            focusState.focusMin = Math.max(5, Math.min(90, opts.focusMin));
+            if (!focusState.running && focusState.phase === 'focus') {
+              focusState.totalSec = focusState.focusMin * 60;
+              focusState.remainSec = focusState.totalSec;
+            }
+          }
+          if (typeof opts.breakMin === 'number') {
+            focusState.breakMin = Math.max(1, Math.min(30, opts.breakMin));
+            if (!focusState.running && focusState.phase === 'break') {
+              focusState.totalSec = focusState.breakMin * 60;
+              focusState.remainSec = focusState.totalSec;
+            }
+          }
+          if (typeof opts.pauseOnBreak === 'boolean') {
+            focusState.pauseOnBreak = opts.pauseOnBreak;
+          }
+          emitFocus();
+          return getFocusStateObj();
+        },
+        subscribe: (fn) => { focusListeners.add(fn); return () => focusListeners.delete(fn); },
+      };
+
+      window.__jphoneAudio = {
+        isMicSupported: () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+        listAudioInputs,
+        getActiveMicLabel: () => callActiveMicLabel || recActiveMicLabel || '',
+        getInputLevel: () => callActive ? callLevel : recCurrentLevel,
+        getVadSnapshot: () => JSON.stringify({
+          heardSpeech: callActive ? uttInSpeech : vadHeardSpeech,
+          silenceMs: vadLastVoiceMs > 0 ? (Date.now() - vadLastVoiceMs) : 0,
+          level: callActive ? callLevel : recCurrentLevel,
+          peak: callActive ? uttPeak : recPeak,
+          micLabel: callActiveMicLabel || recActiveMicLabel,
+        }),
+        playBase64Wav,
+        stopAudio,
+        startRecording,
+        stopRecording: async () => JSON.parse(await stopRecordingWithMeta()).base64 || '',
+        stopRecordingWithMeta,
+        // Full-duplex continuous call API
+        startCallSession,
+        stopCallSession,
+        setCallMuted,
+        setCallBusy,
+        setAgentSpeaking,
+        getCallState,
+        consumeUtterance,
+      };
+    })();
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

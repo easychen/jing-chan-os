@@ -1,0 +1,21 @@
+{
+  "id": "water-tracker",
+  "name": "深海喝水打卡",
+  "type": "miniapp",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "icon": "droplets",
+  "color": "#0EA5E9",
+  "author": "easychen",
+  "description": "极简深海喝水记录，每天 8 杯水，小鲸陪你养成健康节律",
+  "permissions": [
+    "storage",
+    "ui.header",
+    "ui.notify"
+  ],
+  "tags": [
+    "健康",
+    "打卡",
+    "官方示范"
+  ]
+}

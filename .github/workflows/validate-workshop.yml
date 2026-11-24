@@ -1,0 +1,30 @@
+name: Validate Plugin & Workshop
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run dsh-plugin-jphone tests
+        working-directory: packages/dsh-plugin-jphone
+        run: node --test tests/*.test.mjs
+      - name: Validate workshop/index.json & manifests
+        run: |
+          node -e "
+            import { readFile } from 'node:fs/promises';
+            import { validateWorkshopManifest } from './packages/dsh-plugin-jphone/lib/workshop.mjs';
+            const idx = JSON.parse(await readFile('./workshop/index.json', 'utf8'));
+            if (!Array.isArray(idx.items) || idx.items.length === 0) throw new Error('index.json items empty');
+            for (const item of idx.items) {
+              const res = validateWorkshopManifest(item);
+              if (!res.ok) throw new Error('Invalid index item ' + item.id + ': ' + res.error);
+            }
+            console.log('Validated', idx.items.length, 'workshop index items.');
+          "
