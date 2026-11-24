@@ -19,7 +19,8 @@
     "skills",
     "web-dist",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {
@@ -47,5 +48,26 @@
     "type": "git",
     "url": "git+https://github.com/easychen/jing-chan-os.git",
     "directory": "packages/dsh-plugin-jphone"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "ai-companion",
+    "desktop-pet",
+    "voice-assistant",
+    "focus-timer",
+    "jingchan",
+    "jphone",
+    "小鲸同学"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/easychen/jing-chan-os/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
