@@ -1969,7 +1969,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     }
 
     if (entry && entry.url) {
-      const isImg = entry.mediaType === 'image' || /\.(png|webp|gif|jpg|jpeg)(\?|$)/i.test(entry.url);
+      const isImg = entry.mediaType === 'image' || /\\.(png|webp|gif|jpg|jpeg)(\\?|$)/i.test(entry.url);
       if (isImg) {
         if (customLavVid) {
           try { customLavVid.pause(); } catch {}
@@ -2110,7 +2110,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
           reader.onerror = () => reject(new Error('read_failed'));
           reader.readAsDataURL(file);
         });
-        const cleanName = file.name.replace(/\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/i, '').trim() || '自定义伴学视频';
+        const cleanName = file.name.replace(/\\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/i, '').trim() || '自定义伴学视频';
         const res = await window.jing.focus.uploadMedia({
           name: cleanName,
           slot: 'stand',
