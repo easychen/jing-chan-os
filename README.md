@@ -93,7 +93,6 @@ dsh plugin add dsh-plugin-jphone
 为了兼顾**社区自由扩展**与**项目长期可持续演进**，JingChanOS 采用 **Open-Core + 开放生态** 模式：
 - **完全开源（MIT）**：DSH 插件服务端、桥接协议与 `window.jing` SDK、创意工坊索引与校验工具、全部官方 Skills 与示范包；
 - **免费预编译分发**：桌面端预编译 Web 资源（`web-dist/`）与 Android 客户端 APK（通过 GitHub Releases 提供）；
-- **可持续支持**：后续将提供可选的托管云增值服务（稳定免折腾的国内穿透中继、开箱即用语音/多模态额度包、官方精选工坊服务等），开源用户永远可以免费自托管与使用自己的 API Key。
 
 ---
 

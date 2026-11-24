@@ -34,7 +34,7 @@ Open-Core & Prebuilt Client Distribution Notice
    - Compiled Flutter Web bundle (`packages/dsh-plugin-jphone/web-dist/`) and
      prebuilt Android APK packages distributed via GitHub Releases are provided
      free of charge for personal and non-commercial use with DeepSeek Harness.
-   - The native mobile client source code and optional hosted cloud services
-     are maintained separately and are not covered by the MIT grant above.
+   - The native mobile client source code is maintained separately and is not
+     covered by the MIT grant above.
    - Brand names ("小鲸同学", "JingChan") and official character illustrations
      remain the property of their respective authors.

@@ -38,6 +38,6 @@
 1. Fork `https://github.com/easychen/jing-chan-os`；
 2. 在 `workshop/index.json` 的 `items` 数组中追加你的作品条目（填写 `repo` 指向你的 GitHub 仓库或子目录，或者将小型开源示范包放到 `workshop/packages/<id>/`）；
 3. 提交 Pull Request —— GitHub Actions 会自动校验 `workshop/index.json` 与 `manifest.json` 格式；
-4. 合并后会自动同步到 Gitee 国内镜像，所有用户即可在创意工坊首页一键安装！
+4. 合并后所有用户即可在创意工坊首页一键安装！
 
 > 提示：你也可以直接在小鲸同学「创意工坊」里点「让小鲸打包发布」，小鲸会自动调用内置的 `jphone-workshop-publisher` Skill 帮你完成打包与推送。

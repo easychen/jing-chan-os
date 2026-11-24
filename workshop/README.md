@@ -3,7 +3,7 @@
 本目录是 **小鲸同学（JingChan / JPhone）** 去中心化创意工坊的官方精选索引（原 `jing-phone-index` 已合并至此）。
 
 - **主源（GitHub）**：`https://github.com/easychen/jing-chan-os/tree/main/workshop`
-- **国内镜像（Gitee）**：`https://gitee.com/easychen/jing-chan-os/tree/main/workshop`（由 GitHub Actions 自动镜像）
+- **国内镜像（Gitee）**：`https://gitee.com/easychen/jing-chan-os/tree/main/workshop`（定期同步镜像）
 
 ## 架构特点
 - **零账号门槛 / 去中心化**：创作者作品托管在自己的 GitHub 或 Gitee 仓库中，遵循标准 `manifest.json` 协议。
