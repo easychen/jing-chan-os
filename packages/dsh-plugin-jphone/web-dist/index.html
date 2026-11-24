@@ -152,15 +152,45 @@
         if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return '[]';
         try {
           const devs = await navigator.mediaDevices.enumerateDevices();
-          const inputs = devs
+          const raw = devs
             .filter((d) => d.kind === 'audioinput')
             .map((d, idx) => ({
               id: d.deviceId || '',
               label: d.label || ('麦克风 ' + (idx + 1)),
             }));
-          return JSON.stringify(inputs);
+          const ordered = [];
+          const def = raw.find((d) => d.id === 'default');
+          if (def) {
+            ordered.push(def);
+            for (const d of raw) {
+              if (d.id !== 'default') ordered.push(d);
+            }
+          } else if (raw.length > 0) {
+            ordered.push({ id: 'default', label: '系统默认麦克风' });
+            for (const d of raw) ordered.push(d);
+          }
+          return JSON.stringify(ordered);
         } catch (_) {
           return '[]';
+        }
+      }
+
+      async function acquireMicStream(baseConstraints, deviceId) {
+        const wantId = (deviceId && typeof deviceId === 'string') ? deviceId.trim() : '';
+        const targetId = wantId || 'default';
+        try {
+          return await navigator.mediaDevices.getUserMedia({
+            audio: { ...baseConstraints, deviceId: { exact: targetId } },
+          });
+        } catch (_) {
+          if (targetId !== 'default') {
+            try {
+              return await navigator.mediaDevices.getUserMedia({
+                audio: { ...baseConstraints, deviceId: { exact: 'default' } },
+              });
+            } catch (_) {}
+          }
+          return await navigator.mediaDevices.getUserMedia({ audio: baseConstraints });
         }
       }
 
@@ -262,10 +292,7 @@
             autoGainControl: { ideal: true },
             channelCount: { ideal: 1 },
           };
-          if (deviceId && typeof deviceId === 'string' && deviceId.length > 0) {
-            audioConstraints.deviceId = { exact: deviceId };
-          }
-          callStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+          callStream = await acquireMicStream(audioConstraints, deviceId);
           const track = callStream.getAudioTracks()[0];
           callActiveMicLabel = (track && track.label) ? track.label : '默认麦克风';
           try {
@@ -468,10 +495,7 @@
             noiseSuppression: true,
             autoGainControl: true,
           };
-          if (deviceId && typeof deviceId === 'string' && deviceId.length > 0) {
-            audioConstraints.deviceId = { exact: deviceId };
-          }
-          recStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+          recStream = await acquireMicStream(audioConstraints, deviceId);
           const track = recStream.getAudioTracks()[0];
           recActiveMicLabel = (track && track.label) ? track.label : '默认麦克风';
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
