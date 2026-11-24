@@ -15,3 +15,10 @@
 ## 用 AI Skill 自动创作
 如果你已在 DeepSeek Harness 中启用了本插件，可直接对小鲸同学说：
 > 「用 `jphone-asset-creator` 帮我做一张深海星空主题的动态壁纸」
+
+## 在线制作与官方客户端（Panime）
+
+无需写代码，你可以直接使用官方 **Panime** 工具制作 `.panime.png` 裸眼 3D / 物理果冻动态壁纸（内置布丁、弹簧、跟随、浮动 4 种物理画笔与人物眨眼动效）：
+
+- **官网与在线编辑器**：[https://panime.ft07.com/](https://panime.ft07.com/)（打开即可在线制作与导出 `.panime.png`）
+- **移动端客户端**：官网同时提供 **Android APK** 与 **iOS App Store** 版本，手机上画完导出 `.panime.png` 后，可直接导入小鲸同学「壁纸与动效」并同步至桌面端。

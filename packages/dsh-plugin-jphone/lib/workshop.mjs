@@ -187,6 +187,41 @@ export async function fetchGitTextFile(parsed, file, { fetchImpl = fetch, useGhC
   throw new Error(`Unable to fetch ${file} from ${parsed.repoUrl}`)
 }
 
+async function fetchViaGhCliBinary(parsed, file) {
+  const fp = parsed.relPath(file)
+  const apiPath = `repos/${parsed.owner}/${parsed.repo}/contents/${fp}?ref=${encodeURIComponent(parsed.branch)}`
+  const { stdout } = await execFileAsync('gh', ['api', apiPath, '-H', 'Accept: application/vnd.github.raw+json'], {
+    timeout: 15000,
+    maxBuffer: 42 * 1024 * 1024,
+    encoding: 'buffer',
+  })
+  return Buffer.isBuffer(stdout) ? stdout : Buffer.from(stdout)
+}
+
+export async function fetchGitBinaryFile(parsed, file, { fetchImpl = fetch, useGhCli = true } = {}) {
+  if (!isSafeRelPath(file)) {
+    throw new Error(`unsafe asset path: ${file}`)
+  }
+  const url = parsed.rawUrl(file)
+  try {
+    const res = await fetchImpl(url, {
+      headers: { 'user-agent': 'JingPhone-Workshop/1.0' },
+      signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(12000) : undefined,
+    })
+    if (res.ok) {
+      const ab = await res.arrayBuffer()
+      return Buffer.from(ab)
+    }
+  } catch {}
+
+  if (useGhCli && parsed.provider === 'github') {
+    try {
+      return await fetchViaGhCliBinary(parsed, file)
+    } catch {}
+  }
+  throw new Error(`Unable to fetch binary ${file} from ${parsed.repoUrl}`)
+}
+
 const memCache = new Map()
 const CACHE_TTL_MS = 10 * 60 * 1000
 
@@ -324,7 +359,8 @@ export async function installGitPackage(repoUrl, { store, skillsDir = '', fetchI
 
   const parsed = parseGitRepoUrl(repoUrl)
   const m = inspected.manifest
-  const entryText = await fetchGitTextFile(parsed, m.entry, { fetchImpl, useGhCli })
+  const isDirectCharMedia = m.type === 'character' && /\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/i.test(m.entry)
+  const entryText = isDirectCharMedia ? '' : await fetchGitTextFile(parsed, m.entry, { fetchImpl, useGhCli })
 
   if (m.type === 'miniapp') {
     const app = await store.installMiniApp({
@@ -359,6 +395,73 @@ export async function installGitPackage(repoUrl, { store, skillsDir = '', fetchI
       repoUrl: parsed.repoUrl,
     })
     return { ok: true, type: 'wallpaper', manifest: m }
+  }
+
+  if (m.type === 'character') {
+    const files = {}
+    const posesMap = {}
+    const reactionsMap = {}
+    let bgFile = ''
+    const isDirectMedia = /\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/i.test(m.entry)
+    if (isDirectMedia) {
+      const buf = await fetchGitBinaryFile(parsed, m.entry, { fetchImpl, useGhCli })
+      files[m.entry] = buf
+      posesMap.stand = m.entry
+    } else {
+      let charSpec = {}
+      try {
+        charSpec = JSON.parse(entryText)
+      } catch {
+        return { ok: false, error: 'character entry is not valid JSON' }
+      }
+      const lav = (charSpec && typeof charSpec.lav === 'object' && charSpec.lav) ? charSpec.lav : {}
+      const poseAliases = [
+        ['stand', lav.stand || lav.idle],
+        ['desk', lav.desk],
+        ['glance', lav.glance],
+        ['sit', lav.sit],
+      ]
+      for (const [poseKey, rel] of poseAliases) {
+        if (typeof rel === 'string' && isSafeRelPath(rel)) {
+          files[rel] = await fetchGitBinaryFile(parsed, rel, { fetchImpl, useGhCli })
+          posesMap[poseKey] = rel
+        }
+      }
+      const reactAliases = [
+        ['head', lav.touch_head || lav.head],
+        ['body', lav.touch_body || lav.body],
+        ['tail', lav.touch_tail || lav.tail],
+      ]
+      for (const [zone, rel] of reactAliases) {
+        if (typeof rel === 'string' && isSafeRelPath(rel)) {
+          files[rel] = await fetchGitBinaryFile(parsed, rel, { fetchImpl, useGhCli })
+          reactionsMap[zone] = rel
+        }
+      }
+      const rawBg = typeof charSpec.bg === 'string' ? charSpec.bg : (typeof lav.bg === 'string' ? lav.bg : '')
+      if (rawBg && isSafeRelPath(rawBg)) {
+        files[rawBg] = await fetchGitBinaryFile(parsed, rawBg, { fetchImpl, useGhCli })
+        bgFile = rawBg
+      }
+    }
+    const installed = await store.installFocusPackFromFiles({
+      id: m.id,
+      name: m.name,
+      author: m.author,
+      source: `git:${parsed.provider}:${parsed.owner}/${parsed.repo}`,
+      files,
+      posesMap,
+      reactionsMap,
+      bgFile,
+      activate: true,
+    })
+    return {
+      ok: true,
+      type: 'character',
+      manifest: m,
+      focusPack: installed.pack,
+      item: { id: m.id, title: m.name, kind: 'character', installed: true },
+    }
   }
 
   return { ok: true, type: m.type, manifest: m }

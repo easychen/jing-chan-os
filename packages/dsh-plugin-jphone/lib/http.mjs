@@ -22,6 +22,8 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.webp': 'image/webp',
   '.webm': 'video/webm',
+  '.mp4': 'video/mp4',
+  '.gif': 'image/gif',
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',
   '.vtt': 'text/vtt; charset=utf-8',
@@ -201,6 +203,9 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
       } else if (pathname === '/jphone/api/notify/event' && !appCap.permissions.includes('notify.push') && !appCap.permissions.includes('ui.notify')) {
         replyJson(403, { ok: false, error: 'permission_denied', required: 'notify.push' })
         return
+      } else if (pathname.startsWith('/jphone/api/focus/packs') && req.method !== 'GET' && appCap.appId !== 'jing-focus') {
+        replyJson(403, { ok: false, error: 'permission_denied', reason: 'focus_packs_restricted' })
+        return
       }
     }
 
@@ -363,6 +368,70 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         })
         try { wsHub?.broadcast?.({ type: 'wallpaper:updated', wallpaper }) } catch {}
         replyJson(200, { ok: true, entry, wallpaper, wallpapers: store.listWallpapers() })
+        return
+      }
+
+      // P18: Focus Custom Video / Workshop Character Packs
+      if (pathname === '/jphone/api/focus/packs' && req.method === 'GET') {
+        replyJson(200, {
+          ok: true,
+          activeId: store.getActiveFocusPackId(),
+          packs: store.listFocusPacks(),
+        })
+        return
+      }
+      if (pathname === '/jphone/api/focus/packs/select' && req.method === 'POST') {
+        const body = await readJsonBody(req)
+        const id = String(body.id || 'xiaojing').trim()
+        try {
+          const res = await store.setActiveFocusPack(id)
+          try { wsHub?.broadcast?.({ type: 'focusPacks:updated', ...res }) } catch {}
+          replyJson(200, { ok: true, ...res })
+        } catch (err) {
+          replyJson(404, { ok: false, error: err?.message || 'pack_not_found' })
+        }
+        return
+      }
+      if (pathname === '/jphone/api/focus/packs/upload' && req.method === 'POST') {
+        const body = await readJsonBody(req)
+        const raw = String(body.dataBase64 || body.base64 || '').trim()
+        if (!raw) {
+          replyJson(400, { ok: false, error: 'missing_media_data' })
+          return
+        }
+        const stripped = raw.includes(',') ? raw.slice(raw.indexOf(',') + 1) : raw
+        const buffer = Buffer.from(stripped, 'base64')
+        try {
+          const res = await store.saveCustomFocusMedia({
+            packId: body.packId || '',
+            name: body.name || '',
+            slot: body.slot || 'stand',
+            filename: body.filename || 'loop.webm',
+            buffer,
+            source: 'local',
+            author: 'local',
+            activate: body.activate !== false,
+          })
+          try { wsHub?.broadcast?.({ type: 'focusPacks:updated', activeId: res.activeId, packs: res.packs }) } catch {}
+          replyJson(200, { ok: true, ...res })
+        } catch (err) {
+          replyJson(400, { ok: false, error: err?.message || 'upload_failed' })
+        }
+        return
+      }
+      if (pathname.startsWith('/jphone/api/focus/packs/') && req.method === 'DELETE') {
+        const id = decodeURIComponent(pathname.slice('/jphone/api/focus/packs/'.length)).trim()
+        if (!id || id === 'xiaojing') {
+          replyJson(400, { ok: false, error: 'cannot_delete_builtin' })
+          return
+        }
+        const res = await store.deleteFocusPack(id)
+        if (!res.deleted) {
+          replyJson(404, { ok: false, error: 'pack_not_found' })
+          return
+        }
+        try { wsHub?.broadcast?.({ type: 'focusPacks:updated', activeId: res.activeId, packs: res.packs }) } catch {}
+        replyJson(200, { ok: true, ...res })
         return
       }
       if (pathname === '/jphone/api/mood' && req.method === 'POST') {
@@ -1283,6 +1352,30 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         });
       },
     },
+    focus: {
+      async listPacks() {
+        return await api("/jphone/api/focus/packs");
+      },
+      async selectPack(id) {
+        return await api("/jphone/api/focus/packs/select", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+      },
+      async uploadMedia(payload) {
+        return await api("/jphone/api/focus/packs/upload", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload || {}),
+        });
+      },
+      async deletePack(id) {
+        return await api("/jphone/api/focus/packs/" + encodeURIComponent(id), {
+          method: "DELETE",
+        });
+      },
+    },
     audio: {
       _host() {
         try {
@@ -1402,6 +1495,14 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
       }
 
       // Uploaded wallpapers & .panime.png files (served untouched)
+      if (pathname.startsWith('/jphone/focus-packs/')) {
+        const rel = pathname.slice('/jphone/focus-packs/'.length)
+        if (await serveFileFromDir(res, store.getFocusPacksDir(), rel)) return
+        res.writeHead(404)
+        res.end('Focus pack media not found')
+        return
+      }
+
       if (pathname.startsWith('/jphone/wallpapers/')) {
         const rel = pathname.slice('/jphone/wallpapers/'.length)
         if (await serveFileFromDir(res, store.getWallpapersDir(), rel)) return

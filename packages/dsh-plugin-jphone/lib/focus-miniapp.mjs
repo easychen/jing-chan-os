@@ -633,6 +633,81 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     color: #FFFFFF;
   }
 
+
+  .pack-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--sub);
+  }
+  .pack-import-btn {
+    border: 0.5px solid rgba(125,211,252,0.45);
+    background: rgba(56,189,248,0.16);
+    color: #E0F2FE;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s;
+  }
+  .pack-import-btn:hover { background: rgba(56,189,248,0.28); }
+  .pack-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+  .pack-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0.5px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    color: rgba(248,250,252,0.88);
+    border-radius: 12px;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.16s;
+  }
+  .pack-chip.on {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(125,211,252,0.58);
+    color: #FFFFFF;
+  }
+  .pack-chip-tag {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    color: rgba(226,232,240,0.85);
+  }
+  .pack-chip-del {
+    margin-left: 2px;
+    border: none;
+    background: rgba(248,113,113,0.20);
+    color: #FCA5A5;
+    border-radius: 999px;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+    padding: 0;
+  }
+  .pack-hint {
+    font-size: 11px;
+    color: rgba(203,213,225,0.68);
+    margin-top: 8px;
+    line-height: 1.45;
+  }
+
   /* 5. Frosted Slide-Up Bottom Sheet Drawer */
   .sheet-backdrop {
     position: absolute;
@@ -836,6 +911,8 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
       <video id="xj-react-head" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_touch_head.webm?v=m2v4" muted playsinline preload="auto" style="opacity:0"></video>
       <video id="xj-react-body" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_touch_body.webm?v=m2v4" muted playsinline preload="auto" style="opacity:0"></video>
       <video id="xj-react-tail" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_touch_tail.webm?v=m2v4" muted playsinline preload="auto" style="opacity:0"></video>
+      <video id="custom-lav-vid" class="lav-vid" autoplay loop muted playsinline style="opacity:0;pointer-events:none"></video>
+      <img id="custom-lav-img" class="lav-vid" alt="" style="opacity:0;pointer-events:none;object-fit:contain;object-position:bottom center" />
       <div id="lav-hotspots" class="lav-hotspots">
         <div class="lav-hotspot" data-zone="head" title="摸摸小鲸的头" style="left:23%;top:4%;width:52%;height:31%;"></div>
         <div class="lav-hotspot" data-zone="body" title="轻拍小鲸加油" style="left:20%;top:35%;width:48%;height:34%;"></div>
@@ -869,7 +946,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
       <div class="dock-tabs">
         <button class="dock-tab" data-sheet="scenes">场景</button>
         <button class="dock-tab" data-sheet="audio" id="tab-audio-lbl">声音</button>
-        <button class="dock-tab" data-sheet="poses">姿态</button>
+        <button class="dock-tab" data-sheet="poses">角色</button>
         <button class="dock-tab" data-sheet="pomo" id="tab-pomo-lbl">番茄钟</button>
       </div>
     </div>
@@ -903,7 +980,14 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
           </div>
         </div>
         <div id="pane-poses" class="hidden">
-          <div class="pose-grid" role="tablist" aria-label="小鲸伴学姿态">
+          <div class="pack-header">
+            <span>伴学角色 · 预制 / 自定义 / 工坊包</span>
+            <button id="btn-import-focus-video" class="pack-import-btn" type="button">+ 导入动态视频</button>
+            <input id="focus-video-input" type="file" accept="video/webm,video/mp4,video/quicktime,image/png,image/webp,image/gif" style="display:none" />
+          </div>
+          <div id="focus-pack-list" class="pack-list"></div>
+          <div id="pose-section-title" style="font-size:12px;color:var(--sub);margin-bottom:8px">伴学姿态</div>
+          <div id="pose-grid" class="pose-grid" role="tablist" aria-label="小鲸伴学姿态">
             <button class="pose-card on" data-pose="stand" type="button">
               <span class="pose-card-name">站立</span>
               <span class="pose-card-desc">优雅迎候 · 轻摆鲸尾</span>
@@ -921,6 +1005,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
               <span class="pose-card-desc">慵懒小憩 · 温柔治愈</span>
             </button>
           </div>
+          <div id="focus-pack-hint" class="pack-hint">支持导入透明 .webm（VP9+Alpha）/ .mp4 / 透明动图，也可以在「创意工坊」下载社区角色包，电脑与手机自动同步。</div>
         </div>
         <div id="pane-pomo" class="hidden">
           <div class="preset-row">
@@ -1345,6 +1430,11 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   document.querySelectorAll('.pose-card').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (activeCustomPack) {
+        currentPose = btn.dataset.pose;
+        applyActiveFocusPack({ silent: true });
+        return;
+      }
       setPose(btn.dataset.pose, true);
     });
   });
@@ -1352,7 +1442,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   async function triggerZoneReaction(zone) {
     const lines = ZONE_LINES[zone] || ZONE_LINES.head;
     sayBubble(lines[zoneIdx[zone]++ % lines.length]);
-    if (currentPose !== 'stand') {
+    if (activeCustomPack || currentPose !== 'stand') {
       lavZone.classList.remove('poke-hop');
       void lavZone.offsetWidth;
       lavZone.classList.add('poke-hop');
@@ -1418,7 +1508,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   const sheet = document.getElementById('sheet');
   const sheetBackdrop = document.getElementById('sheet-backdrop');
   const sheetTitle = document.getElementById('sheet-title');
-  const SHEET_TITLES = { scenes: '沉浸场景', audio: '声音 · 白噪音 & Lo-Fi', poses: '伴学姿态', pomo: '番茄专注' };
+  const SHEET_TITLES = { scenes: '沉浸场景', audio: '声音 · 白噪音 & Lo-Fi', poses: '角色与姿态', pomo: '番茄专注' };
   let activeSheet = null;
 
   function openSheet(name) {
@@ -1816,7 +1906,238 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     saveCfg();
   });
 
+  // ---- Custom & Workshop Focus Video / Character Packs ----
+  const customLavVid = document.getElementById('custom-lav-vid');
+  const customLavImg = document.getElementById('custom-lav-img');
+  const focusPackListEl = document.getElementById('focus-pack-list');
+  const poseGridEl = document.getElementById('pose-grid');
+  const poseSectionTitleEl = document.getElementById('pose-section-title');
+  const importFocusBtn = document.getElementById('btn-import-focus-video');
+  const focusVideoInput = document.getElementById('focus-video-input');
+  let focusPacks = [];
+  let activeFocusPackId = 'xiaojing';
+  let activeCustomPack = null;
+
+  function getActiveFocusPack() {
+    return focusPacks.find((p) => p.id === activeFocusPackId) || null;
+  }
+
+  function applyActiveFocusPack(opts = {}) {
+    const pack = getActiveFocusPack();
+    const isCustom = !!(pack && !pack.builtin && pack.id !== 'xiaojing');
+    activeCustomPack = isCustom ? pack : null;
+
+    if (!isCustom) {
+      if (customLavVid) {
+        try { customLavVid.pause(); } catch {}
+        customLavVid.style.opacity = '0';
+      }
+      if (customLavImg) customLavImg.style.opacity = '0';
+      if (poseGridEl) poseGridEl.style.display = '';
+      if (poseSectionTitleEl) poseSectionTitleEl.textContent = '小鲸伴学姿态';
+      setPose(currentPose || 'stand', false, { silent: true, persist: false });
+      return;
+    }
+
+    // Hide official xiaojing clips when displaying custom/workshop pack
+    Object.values(poseVideos).forEach((v) => {
+      try { v.pause(); } catch {}
+      v.style.opacity = '0';
+    });
+    Object.values(reactVideos).forEach((v) => {
+      try { v.pause(); } catch {}
+      v.style.opacity = '0';
+    });
+    activeReact = null;
+
+    const poses = pack.poses || {};
+    const poseKeys = Object.keys(poses);
+    const chosenKey = poses[currentPose] ? currentPose : (poses.stand ? 'stand' : poseKeys[0]);
+    const entry = chosenKey ? poses[chosenKey] : null;
+
+    if (poseGridEl) {
+      const hasMulti = poseKeys.length > 1;
+      poseGridEl.style.display = hasMulti ? '' : 'none';
+      if (poseSectionTitleEl) {
+        poseSectionTitleEl.textContent = hasMulti ? (pack.name + ' · 姿态') : (pack.name + ' · 单循环伴学动态');
+      }
+      poseGridEl.querySelectorAll('.pose-card').forEach((btn) => {
+        const k = btn.dataset.pose;
+        btn.style.display = poses[k] ? '' : 'none';
+        btn.classList.toggle('on', k === chosenKey);
+      });
+    }
+
+    if (entry && entry.url) {
+      const isImg = entry.mediaType === 'image' || /\.(png|webp|gif|jpg|jpeg)(\?|$)/i.test(entry.url);
+      if (isImg) {
+        if (customLavVid) {
+          try { customLavVid.pause(); } catch {}
+          customLavVid.style.opacity = '0';
+        }
+        if (customLavImg) {
+          customLavImg.src = entry.url;
+          customLavImg.style.opacity = '1';
+        }
+      } else {
+        if (customLavImg) customLavImg.style.opacity = '0';
+        if (customLavVid) {
+          if (customLavVid.getAttribute('src') !== entry.url) {
+            customLavVid.src = entry.url;
+            customLavVid.load();
+          }
+          customLavVid.play().catch(() => {});
+          customLavVid.style.opacity = '1';
+        }
+      }
+    }
+
+    if (pack.bgUrl) {
+      const bgLayer = document.getElementById('bg-layer');
+      if (bgLayer) {
+        bgLayer.style.backgroundImage = 'url("' + pack.bgUrl + '")';
+        if (typeof detectTopForeground === 'function') {
+          detectTopForeground(pack.bgUrl);
+        }
+      }
+    }
+    if (!opts.silent) {
+      sayBubble('已切换伴学角色：' + pack.name + ' ✨');
+    }
+  }
+
+  function renderFocusPackList() {
+    if (!focusPackListEl) return;
+    focusPackListEl.innerHTML = '';
+    const list = focusPacks.length > 0
+      ? focusPacks
+      : [{ id: 'xiaojing', name: '小鲸同学（官方）', builtin: true, source: 'builtin' }];
+
+    list.forEach((pack) => {
+      const chip = document.createElement('div');
+      chip.className = 'pack-chip' + (pack.id === activeFocusPackId ? ' on' : '');
+      chip.setAttribute('role', 'button');
+      chip.tabIndex = 0;
+
+      const label = document.createElement('span');
+      label.textContent = pack.name || pack.id;
+      chip.appendChild(label);
+
+      const tag = document.createElement('span');
+      tag.className = 'pack-chip-tag';
+      tag.textContent = pack.builtin ? '官方' : (String(pack.source || '').startsWith('git:') ? '工坊' : '本地');
+      chip.appendChild(tag);
+
+      chip.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (pack.id === activeFocusPackId) return;
+        activeFocusPackId = pack.id;
+        renderFocusPackList();
+        applyActiveFocusPack();
+        try {
+          if (window.jing?.focus?.selectPack) {
+            await window.jing.focus.selectPack(pack.id);
+          }
+        } catch {}
+      });
+
+      if (!pack.builtin) {
+        const del = document.createElement('button');
+        del.className = 'pack-chip-del';
+        del.type = 'button';
+        del.title = '删除自定义视频包';
+        del.textContent = '×';
+        del.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          try {
+            if (window.jing?.focus?.deletePack) {
+              const res = await window.jing.focus.deletePack(pack.id);
+              if (res && res.ok) {
+                focusPacks = Array.isArray(res.packs) ? res.packs : focusPacks.filter((x) => x.id !== pack.id);
+                activeFocusPackId = res.activeId || 'xiaojing';
+                renderFocusPackList();
+                applyActiveFocusPack({ silent: true });
+                sayBubble('已移除自定义伴学视频包');
+              }
+            }
+          } catch {}
+        });
+        chip.appendChild(del);
+      }
+
+      focusPackListEl.appendChild(chip);
+    });
+  }
+
+  async function loadFocusPacks(opts = { silent: true }) {
+    try {
+      if (!window.jing?.focus?.listPacks) {
+        renderFocusPackList();
+        return;
+      }
+      const res = await window.jing.focus.listPacks();
+      if (res && res.ok && Array.isArray(res.packs)) {
+        focusPacks = res.packs;
+        activeFocusPackId = res.activeId || 'xiaojing';
+        renderFocusPackList();
+        applyActiveFocusPack(opts);
+      }
+    } catch {
+      renderFocusPackList();
+    }
+  }
+
+  if (importFocusBtn && focusVideoInput) {
+    importFocusBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      focusVideoInput.value = '';
+      focusVideoInput.click();
+    });
+    focusVideoInput.addEventListener('change', async () => {
+      const file = focusVideoInput.files && focusVideoInput.files[0];
+      if (!file) return;
+      if (file.size > 40 * 1024 * 1024) {
+        sayBubble('视频文件请控制在 40MB 以内哦～');
+        return;
+      }
+      const prevText = importFocusBtn.textContent;
+      importFocusBtn.textContent = '上传中...';
+      importFocusBtn.disabled = true;
+      try {
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.onerror = () => reject(new Error('read_failed'));
+          reader.readAsDataURL(file);
+        });
+        const cleanName = file.name.replace(/\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/i, '').trim() || '自定义伴学视频';
+        const res = await window.jing.focus.uploadMedia({
+          name: cleanName,
+          slot: 'stand',
+          filename: file.name,
+          dataBase64: dataUrl,
+          activate: true,
+        });
+        if (res && res.ok) {
+          focusPacks = Array.isArray(res.packs) ? res.packs : focusPacks;
+          activeFocusPackId = res.activeId || (res.pack && res.pack.id) || 'xiaojing';
+          renderFocusPackList();
+          applyActiveFocusPack();
+          window.jing?.ui?.notify?.({ title: '导入成功', body: '已启用自定义动态视频：' + cleanName });
+        } else {
+          sayBubble('导入失败：' + (res?.error || '请检查网络连接'));
+        }
+      } catch (err) {
+        sayBubble('导入失败：' + (err?.message || '读取文件异常'));
+      } finally {
+        importFocusBtn.textContent = prevText;
+        importFocusBtn.disabled = false;
+      }
+    });
+  }
+
   restoreSavedPose();
+  loadFocusPacks({ silent: true });
   renderScenes();
   renderPomo();
   renderAudioUi();

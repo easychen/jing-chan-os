@@ -1061,6 +1061,236 @@ export class JPhoneStore {
     return next
   }
 
+  getFocusPacksDir() {
+    return join(this.dir, 'focus-packs')
+  }
+
+  getBuiltinFocusPack() {
+    return {
+      id: 'xiaojing',
+      name: '小鲸同学（官方）',
+      author: 'JingChanOS',
+      source: 'builtin',
+      builtin: true,
+      mediaType: 'video',
+      poses: {
+        stand: { label: '站立', desc: '优雅迎候 · 轻摆鲸尾', url: '/jphone/media/lav/xiaojing/xiaojing_idle.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_idle.png?v=m2v4' },
+        desk: { label: '托腮', desc: '伏案凝望 · 近景陪伴', url: '/jphone/media/lav/xiaojing/xiaojing_desk.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_desk.png?v=m2v4' },
+        glance: { label: '侧眸', desc: '回眸拂发 · 窗畔夜色', url: '/jphone/media/lav/xiaojing/xiaojing_glance.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_glance.png?v=m2v4' },
+        sit: { label: '抱膝', desc: '慵懒小憩 · 温柔治愈', url: '/jphone/media/lav/xiaojing/xiaojing_sit.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_sit.png?v=m2v4' },
+      },
+      reactions: {
+        head: '/jphone/media/lav/xiaojing/xiaojing_touch_head.webm?v=m2v4',
+        body: '/jphone/media/lav/xiaojing/xiaojing_touch_body.webm?v=m2v4',
+        tail: '/jphone/media/lav/xiaojing/xiaojing_touch_tail.webm?v=m2v4',
+      },
+      bgUrl: '',
+    }
+  }
+
+  listFocusPacks() {
+    const custom = Array.isArray(this.data.focusPacks) ? this.data.focusPacks : []
+    return [this.getBuiltinFocusPack(), ...custom]
+  }
+
+  getActiveFocusPackId() {
+    const id = String(this.data.activeFocusPackId || 'xiaojing')
+    if (this.listFocusPacks().some((p) => p.id === id)) return id
+    return 'xiaojing'
+  }
+
+  async setActiveFocusPack(id) {
+    const clean = String(id || 'xiaojing').trim() || 'xiaojing'
+    const exists = this.listFocusPacks().some((p) => p.id === clean)
+    if (!exists) throw new Error(`focus pack not found: ${clean}`)
+    this.data.activeFocusPackId = clean
+    await this.save()
+    const payload = { activeId: clean, packs: this.listFocusPacks() }
+    this.emitChange('focusPacks', payload)
+    return payload
+  }
+
+  async saveCustomFocusMedia({
+    packId = '',
+    name = '',
+    slot = 'stand',
+    filename = 'loop.webm',
+    buffer,
+    source = 'local',
+    author = 'local',
+    activate = true,
+  }) {
+    if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+      throw new Error('empty media buffer')
+    }
+    if (buffer.length > 40 * 1024 * 1024) {
+      throw new Error('media file exceeds 40MB limit')
+    }
+    const lower = String(filename || 'loop.webm').toLowerCase()
+    const extMatch = /\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/.exec(lower)
+    const ext = extMatch ? `.${extMatch[1]}` : '.webm'
+    const isImage = ['.png', '.webp', '.gif', '.jpg', '.jpeg'].includes(ext)
+    const allowedSlots = new Set(['stand', 'desk', 'glance', 'sit', 'head', 'body', 'tail', 'bg'])
+    const cleanSlot = allowedSlots.has(String(slot || 'stand')) ? String(slot || 'stand') : 'stand'
+
+    if (!Array.isArray(this.data.focusPacks)) this.data.focusPacks = []
+    let pack = packId
+      ? this.data.focusPacks.find((p) => p.id === packId && !p.builtin)
+      : null
+
+    const cleanId = pack
+      ? pack.id
+      : `fp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+    const packDir = join(this.getFocusPacksDir(), cleanId)
+    await mkdir(packDir, { recursive: true })
+    const storedFile = `${cleanSlot}-${Date.now().toString(36)}${ext}`
+    await writeFile(join(packDir, storedFile), buffer)
+    const publicUrl = `/jphone/focus-packs/${encodeURIComponent(cleanId)}/${encodeURIComponent(storedFile)}`
+
+    if (!pack) {
+      const displayName = String(name || filename || '自定义动态角色')
+        .replace(/\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/i, '')
+        .trim() || '自定义动态角色'
+      pack = {
+        id: cleanId,
+        name: displayName.slice(0, 48),
+        author: String(author || 'local'),
+        source: String(source || 'local'),
+        builtin: false,
+        mediaType: isImage ? 'image' : 'video',
+        poses: {},
+        reactions: {},
+        bgUrl: '',
+        createdAt: Date.now(),
+      }
+      this.data.focusPacks.unshift(pack)
+      this.data.focusPacks = this.data.focusPacks.slice(0, 24)
+    } else if (name && String(name).trim()) {
+      pack.name = String(name).trim().slice(0, 48)
+    }
+
+    if (cleanSlot === 'bg') {
+      pack.bgUrl = publicUrl
+    } else if (['head', 'body', 'tail'].includes(cleanSlot)) {
+      pack.reactions = { ...(pack.reactions || {}), [cleanSlot]: publicUrl }
+    } else {
+      const labels = { stand: '主循环', desk: '伏案', glance: '侧眸', sit: '坐姿' }
+      pack.mediaType = isImage ? 'image' : 'video'
+      pack.poses = {
+        ...(pack.poses || {}),
+        [cleanSlot]: {
+          label: labels[cleanSlot] || cleanSlot,
+          desc: isImage ? '自定义透明图 / 动图' : '自定义动态视频',
+          url: publicUrl,
+          mediaType: isImage ? 'image' : 'video',
+        },
+      }
+    }
+    pack.updatedAt = Date.now()
+    if (activate) {
+      this.data.activeFocusPackId = pack.id
+    }
+    await this.save()
+    const payload = { pack, activeId: this.getActiveFocusPackId(), packs: this.listFocusPacks() }
+    this.emitChange('focusPacks', payload)
+    return payload
+  }
+
+  async installFocusPackFromFiles({
+    id,
+    name,
+    author = 'community',
+    source = 'git',
+    files = {},
+    posesMap = {},
+    reactionsMap = {},
+    bgFile = '',
+    activate = true,
+  }) {
+    const cleanId = String(id || '').trim().toLowerCase().replace(/[^a-z0-9-_]/g, '')
+    if (!cleanId || cleanId === 'xiaojing') {
+      throw new Error('invalid focus pack id')
+    }
+    const packDir = join(this.getFocusPacksDir(), cleanId)
+    await mkdir(packDir, { recursive: true })
+    const savedUrls = {}
+    for (const [relName, buf] of Object.entries(files)) {
+      if (!Buffer.isBuffer(buf) || buf.length === 0) continue
+      const safeName = String(relName).replace(/[^a-zA-Z0-9._-]/g, '_')
+      await writeFile(join(packDir, safeName), buf)
+      savedUrls[relName] = `/jphone/focus-packs/${encodeURIComponent(cleanId)}/${encodeURIComponent(safeName)}`
+    }
+
+    const poses = {}
+    const labels = { stand: '默认', desk: '伏案', glance: '侧眸', sit: '坐姿' }
+    let primaryMediaType = 'video'
+    for (const [poseKey, relName] of Object.entries(posesMap)) {
+      const url = savedUrls[relName]
+      if (!url) continue
+      const isImg = /\.(png|webp|gif|jpg|jpeg)$/i.test(relName)
+      if (poseKey === 'stand') primaryMediaType = isImg ? 'image' : 'video'
+      poses[poseKey] = {
+        label: labels[poseKey] || poseKey,
+        desc: isImg ? '工坊透明图' : '工坊动态视频',
+        url,
+        mediaType: isImg ? 'image' : 'video',
+      }
+    }
+    const reactions = {}
+    for (const [zone, relName] of Object.entries(reactionsMap)) {
+      if (savedUrls[relName]) reactions[zone] = savedUrls[relName]
+    }
+    const bgUrl = bgFile && savedUrls[bgFile] ? savedUrls[bgFile] : ''
+
+    if (Object.keys(poses).length === 0) {
+      throw new Error('character pack contains no valid focus video or image pose')
+    }
+
+    if (!Array.isArray(this.data.focusPacks)) this.data.focusPacks = []
+    this.data.focusPacks = this.data.focusPacks.filter((p) => p.id !== cleanId)
+    const pack = {
+      id: cleanId,
+      name: String(name || cleanId).trim().slice(0, 48),
+      author: String(author || 'community'),
+      source: String(source || 'git'),
+      builtin: false,
+      mediaType: primaryMediaType,
+      poses,
+      reactions,
+      bgUrl,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    this.data.focusPacks.unshift(pack)
+    this.data.focusPacks = this.data.focusPacks.slice(0, 24)
+    if (activate) this.data.activeFocusPackId = cleanId
+    await this.save()
+    const payload = { pack, activeId: this.getActiveFocusPackId(), packs: this.listFocusPacks() }
+    this.emitChange('focusPacks', payload)
+    return payload
+  }
+
+  async deleteFocusPack(id) {
+    const clean = String(id || '').trim()
+    if (!clean || clean === 'xiaojing') {
+      throw new Error('cannot delete builtin xiaojing pack')
+    }
+    if (!Array.isArray(this.data.focusPacks)) this.data.focusPacks = []
+    const before = this.data.focusPacks.length
+    this.data.focusPacks = this.data.focusPacks.filter((p) => p.id !== clean)
+    if (this.data.activeFocusPackId === clean) {
+      this.data.activeFocusPackId = 'xiaojing'
+    }
+    await rm(join(this.getFocusPacksDir(), clean), { recursive: true, force: true }).catch(() => {})
+    const deleted = this.data.focusPacks.length !== before
+    if (deleted) {
+      await this.save()
+    }
+    const payload = { deleted, activeId: this.getActiveFocusPackId(), packs: this.listFocusPacks() }
+    this.emitChange('focusPacks', payload)
+    return payload
+  }
+
   getWallpapersDir() {
     return join(this.dir, 'wallpapers')
   }
