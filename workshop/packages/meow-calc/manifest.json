@@ -1,0 +1,20 @@
+{
+  "id": "meow-calc",
+  "name": "喵喵计算器",
+  "type": "miniapp",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "icon": "calculator",
+  "color": "#F3A46B",
+  "author": "easychen",
+  "description": "猫猫陪伴的治愈系计算器：实时算式预览、毛线球账本历史、喵喵音效与小猫互动",
+  "permissions": [
+    "storage",
+    "ui.header"
+  ],
+  "tags": [
+    "工具",
+    "计算器",
+    "治愈"
+  ]
+}
