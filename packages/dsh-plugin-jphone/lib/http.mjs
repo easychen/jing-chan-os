@@ -6,6 +6,7 @@ import { synthesizeTts, transcribeAsr, runVoiceTurn, consumeVoiceTaskFollowups, 
 import { formatLocalDateKey } from './store.mjs'
 import { isValidServerChanKey, maskServerChanKey, buildAppKeyCreateUrl, sendServerChanNotification, notifyIfEnabled } from './notify.mjs'
 import { fetchWorkshopIndex, inspectGitPackage, installGitPackage } from './workshop.mjs'
+import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize, resolve, sep } from 'node:path'
 
@@ -107,6 +108,14 @@ async function serveFileFromDir(res, rootDir, relPath) {
 }
 
 const PLUGIN_ASSETS_DIR = fileURLToPath(new URL('../assets', import.meta.url))
+const PLUGIN_VERSION = (() => {
+  try {
+    const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'))
+    return String(pkg.version || '0.0.0')
+  } catch {
+    return '0.0.0'
+  }
+})()
 
 
 function capabilitySecret(store) {
@@ -211,7 +220,7 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
 
     try {
       if (pathname === '/jphone/api/health') {
-        replyJson(200, { ok: true, product: 'JPhone', zhName: '小鲸同学', enName: 'JingChan', character: '小鲸同学', bridgePort })
+        replyJson(200, { ok: true, product: 'JPhone', zhName: '小鲸同学', enName: 'JingChan', character: '小鲸同学', version: PLUGIN_VERSION, pluginVersion: PLUGIN_VERSION, bridgePort })
         return
       }
 

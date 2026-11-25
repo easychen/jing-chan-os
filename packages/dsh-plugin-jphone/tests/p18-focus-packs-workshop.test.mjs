@@ -165,6 +165,11 @@ test('P18 Focus Built-in Audio: all 12 noise tracks and 6 Lo-Fi tracks return 20
     const { port } = server.address()
     const base = `http://127.0.0.1:${port}`
     try {
+      const hRes = await fetch(`${base}/jphone/api/health`)
+      assert.equal(hRes.status, 200)
+      const hJson = await hRes.json()
+      assert.match(String(hJson.version || ''), /^\d+\.\d+\.\d+/)
+      assert.equal(hJson.pluginVersion, hJson.version)
       for (const item of FOCUS_NOISE_TRACKS) {
         const res = await fetch(`${base}/jphone/media/focus/noise/${encodeURIComponent(item.file)}`)
         assert.equal(res.status, 200, `Noise ${item.id} (${item.file}) should return 200`)
