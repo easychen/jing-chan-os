@@ -96745,15 +96745,15 @@ f=i?d:new A.aDG(e)
 f=A.jG(B.abH,d,B.bX,d,B.a7C,new A.uq(j.e,f,d))
 i=i?d:new A.aDH(e)
 i=A.eV(A.b([h,new A.aw(B.MU,o,d),l,g,f,A.jG(B.abF,d,B.bX,d,B.a87,new A.uq(j.f,i,d))],c),d,B.a6w,d)
-j=A.jG(B.abE,d,B.bX,A.a9("JingChan \xb7 "+A.aUw(),d,d,d,B.cw,d,d),B.a7Z,A.a9("v0.1.3",d,d,d,B.a5o,d,d))
+j=A.jG(B.abE,d,B.bX,A.a9("JingChan \xb7 "+A.aUw(),d,d,d,B.cw,d,d),B.a7Z,A.a9("v0.1.4",d,d,d,B.a5o,d,d))
 p=!p
 if(p)o="\u672a\u8fde\u63a5"
 else{o=a.d
 if(o.length===0)o="\u672a\u77e5"
 else{l="v"+o
-o=o==="0.1.3"?l:l+" \xb7 \u4e0d\u4e00\u81f4"}}if(p)p=B.a1
+o=o==="0.1.4"?l:l+" \xb7 \u4e0d\u4e00\u81f4"}}if(p)p=B.a1
 else{p=a.d
-p=p.length!==0&&p!=="0.1.3"?B.dA:B.aC}p=A.jG(B.abC,d,B.bX,B.a7G,B.a6r,A.a9(o,d,d,d,A.bR(d,d,p,d,d,d,d,d,d,d,d,13.5,d,d,B.E,d,d,!0,d,d,d,d,d,d,d,d),d,d))
+p=p.length!==0&&p!=="0.1.4"?B.dA:B.aC}p=A.jG(B.abC,d,B.bX,B.a7G,B.a6r,A.a9(o,d,d,d,A.bR(d,d,p,d,d,d,d,d,d,d,d,13.5,d,d,B.E,d,d,!0,d,d,d,d,d,d,d,d),d,d))
 o=e.ch
 l=o?"\u5df2\u590d\u5236\u7248\u672c\u8bca\u65ad\u4fe1\u606f":"\u590d\u5236\u7248\u672c\u8bca\u65ad\u4fe1\u606f"
 return A.N0(A.kR(B.aR,A.es(B.T,!0,d,A.bj(A.b([s,A.ch(A.jP(A.b([r,q,i,A.aC(d,A.eV(A.b([j,p,A.jG(B.abL,new A.aDy(e,a),B.bX,d,A.a9(l,d,d,d,A.bR(d,d,o?B.aC:B.u,d,d,d,d,d,d,d,d,14.5,d,d,B.L,d,d,!0,d,d,d,d,d,d,d,d),d,d),d),A.jG(B.abG,new A.aDz(),B.bX,B.a76,B.a7r,B.fO)],c),B.a6u,B.a71,B.N6),!0,d,d,!1,!1,d,d,d,d,"jphone-about-section",d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d,d)],c),B.j5),1)],c),B.o,B.m,B.q),B.k,d,0,d,d,d,d,d,B.bb),d),b,t.lu)}}
@@ -96914,7 +96914,7 @@ for(;;)switch(s){case 0:n=p.b
 if(n.e){n=n.d
 o=n.length===0?"unknown":"v"+n}else o="disconnected"
 s=3
-return A.j(A.md(new A.jF("\u5c0f\u9cb8\u540c\u5b66 JingChanOS | Client v0.1.3+4 ("+A.aUw()+") | Plugin dsh-plugin-jphone "+o)),$async$$0)
+return A.j(A.md(new A.jF("\u5c0f\u9cb8\u540c\u5b66 JingChanOS | Client v0.1.4+5 ("+A.aUw()+") | Plugin dsh-plugin-jphone "+o)),$async$$0)
 case 3:n=p.a
 if(n.c==null){s=1
 break}n.G(new A.aDq(n))

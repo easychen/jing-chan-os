@@ -1,4 +1,5 @@
 import { createFocusMiniAppRecord } from './focus-miniapp.mjs'
+import { ensureFocusVideoWebKitCompat, isStackedAlphaFilename } from './focus-video-compat.mjs'
 import { mkdir, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { randomBytes } from 'node:crypto'
@@ -1074,15 +1075,20 @@ export class JPhoneStore {
       builtin: true,
       mediaType: 'video',
       poses: {
-        stand: { label: '站立', desc: '优雅迎候 · 轻摆鲸尾', url: '/jphone/media/lav/xiaojing/xiaojing_idle.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_idle.png?v=m2v4' },
-        desk: { label: '托腮', desc: '伏案凝望 · 近景陪伴', url: '/jphone/media/lav/xiaojing/xiaojing_desk.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_desk.png?v=m2v4' },
-        glance: { label: '侧眸', desc: '回眸拂发 · 窗畔夜色', url: '/jphone/media/lav/xiaojing/xiaojing_glance.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_glance.png?v=m2v4' },
-        sit: { label: '抱膝', desc: '慵懒小憩 · 温柔治愈', url: '/jphone/media/lav/xiaojing/xiaojing_sit.webm?v=m2v4', poster: '/jphone/media/lav/xiaojing/xiaojing_sit.png?v=m2v4' },
+        stand: { label: '站立', desc: '优雅迎候 · 轻摆鲸尾', url: '/jphone/media/lav/xiaojing/xiaojing_idle.webm?v=m2v4', movUrl: '/jphone/media/lav/xiaojing/xiaojing_idle.mov?v=m2v6', poster: '/jphone/media/lav/xiaojing/xiaojing_idle.png?v=m2v4' },
+        desk: { label: '托腮', desc: '伏案凝望 · 近景陪伴', url: '/jphone/media/lav/xiaojing/xiaojing_desk.webm?v=m2v4', movUrl: '/jphone/media/lav/xiaojing/xiaojing_desk.mov?v=m2v6', poster: '/jphone/media/lav/xiaojing/xiaojing_desk.png?v=m2v4' },
+        glance: { label: '侧眸', desc: '回眸拂发 · 窗畔夜色', url: '/jphone/media/lav/xiaojing/xiaojing_glance.webm?v=m2v4', movUrl: '/jphone/media/lav/xiaojing/xiaojing_glance.mov?v=m2v6', poster: '/jphone/media/lav/xiaojing/xiaojing_glance.png?v=m2v4' },
+        sit: { label: '抱膝', desc: '慵懒小憩 · 温柔治愈', url: '/jphone/media/lav/xiaojing/xiaojing_sit.webm?v=m2v4', movUrl: '/jphone/media/lav/xiaojing/xiaojing_sit.mov?v=m2v6', poster: '/jphone/media/lav/xiaojing/xiaojing_sit.png?v=m2v4' },
       },
       reactions: {
         head: '/jphone/media/lav/xiaojing/xiaojing_touch_head.webm?v=m2v4',
         body: '/jphone/media/lav/xiaojing/xiaojing_touch_body.webm?v=m2v4',
         tail: '/jphone/media/lav/xiaojing/xiaojing_touch_tail.webm?v=m2v4',
+      },
+      reactionsMov: {
+        head: '/jphone/media/lav/xiaojing/xiaojing_touch_head.mov?v=m2v6',
+        body: '/jphone/media/lav/xiaojing/xiaojing_touch_body.mov?v=m2v6',
+        tail: '/jphone/media/lav/xiaojing/xiaojing_touch_tail.mov?v=m2v6',
       },
       bgUrl: '',
     }
@@ -1143,9 +1149,26 @@ export class JPhoneStore {
       : `fp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
     const packDir = join(this.getFocusPacksDir(), cleanId)
     await mkdir(packDir, { recursive: true })
-    const storedFile = `${cleanSlot}-${Date.now().toString(36)}${ext}`
-    await writeFile(join(packDir, storedFile), buffer)
+    const storedStem = `${cleanSlot}-${Date.now().toString(36)}`
+    const storedFile = `${storedStem}${ext}`
+    const storedPath = join(packDir, storedFile)
+    await writeFile(storedPath, buffer)
     const publicUrl = `/jphone/focus-packs/${encodeURIComponent(cleanId)}/${encodeURIComponent(storedFile)}`
+    const isDirectMov = ext === '.mov'
+    const isDirectStacked = isStackedAlphaFilename(filename)
+    let stackedUrl = isDirectStacked ? publicUrl : ''
+    let alphaLayout = isDirectStacked ? 'stacked' : ''
+    if (!isImage && cleanSlot !== 'bg' && !isDirectMov && !isDirectStacked) {
+      const compat = await ensureFocusVideoWebKitCompat(storedPath, {
+        packDir,
+        stem: storedStem,
+        hasMov: false,
+      })
+      if (compat.stackedFile) {
+        stackedUrl = `/jphone/focus-packs/${encodeURIComponent(cleanId)}/${encodeURIComponent(compat.stackedFile)}`
+      }
+      if (compat.alphaLayout) alphaLayout = compat.alphaLayout
+    }
 
     if (!pack) {
       const displayName = String(name || filename || '自定义动态角色')
@@ -1182,6 +1205,9 @@ export class JPhoneStore {
           label: labels[cleanSlot] || cleanSlot,
           desc: isImage ? '自定义透明图 / 动图' : '自定义动态视频',
           url: publicUrl,
+          ...(isDirectMov ? { movUrl: publicUrl } : {}),
+          ...(stackedUrl ? { stackedUrl } : {}),
+          ...(alphaLayout ? { alphaLayout } : {}),
           mediaType: isImage ? 'image' : 'video',
         },
       }
@@ -1203,7 +1229,10 @@ export class JPhoneStore {
     source = 'git',
     files = {},
     posesMap = {},
+    posesMovMap = {},
+    posesStackedMap = {},
     reactionsMap = {},
+    reactionsMovMap = {},
     bgFile = '',
     activate = true,
   }) {
@@ -1214,11 +1243,14 @@ export class JPhoneStore {
     const packDir = join(this.getFocusPacksDir(), cleanId)
     await mkdir(packDir, { recursive: true })
     const savedUrls = {}
+    const savedPaths = {}
     for (const [relName, buf] of Object.entries(files)) {
       if (!Buffer.isBuffer(buf) || buf.length === 0) continue
       const safeName = String(relName).replace(/[^a-zA-Z0-9._-]/g, '_')
-      await writeFile(join(packDir, safeName), buf)
+      const fullPath = join(packDir, safeName)
+      await writeFile(fullPath, buf)
       savedUrls[relName] = `/jphone/focus-packs/${encodeURIComponent(cleanId)}/${encodeURIComponent(safeName)}`
+      savedPaths[relName] = fullPath
     }
 
     const poses = {}
@@ -1229,16 +1261,44 @@ export class JPhoneStore {
       if (!url) continue
       const isImg = /\.(png|webp|gif|jpg|jpeg)$/i.test(relName)
       if (poseKey === 'stand') primaryMediaType = isImg ? 'image' : 'video'
+      const movRel = posesMovMap[poseKey]
+      const movUrl = (movRel && savedUrls[movRel])
+        ? savedUrls[movRel]
+        : (/\.mov$/i.test(relName) ? url : '')
+      const stackedRel = posesStackedMap[poseKey]
+      const isDirectStacked = isStackedAlphaFilename(relName)
+      let stackedUrl = (stackedRel && savedUrls[stackedRel])
+        ? savedUrls[stackedRel]
+        : (isDirectStacked ? url : '')
+      let alphaLayout = isDirectStacked ? 'stacked' : ''
+      if (!isImg && !movUrl && !stackedUrl && savedPaths[relName]) {
+        const compat = await ensureFocusVideoWebKitCompat(savedPaths[relName], {
+          packDir,
+          stem: `${poseKey}-compat`,
+          hasMov: false,
+        })
+        if (compat.stackedFile) {
+          stackedUrl = `/jphone/focus-packs/${encodeURIComponent(cleanId)}/${encodeURIComponent(compat.stackedFile)}`
+        }
+        if (compat.alphaLayout) alphaLayout = compat.alphaLayout
+      }
       poses[poseKey] = {
         label: labels[poseKey] || poseKey,
         desc: isImg ? '工坊透明图' : '工坊动态视频',
         url,
+        ...(movUrl ? { movUrl } : {}),
+        ...(stackedUrl ? { stackedUrl } : {}),
+        ...(alphaLayout ? { alphaLayout } : {}),
         mediaType: isImg ? 'image' : 'video',
       }
     }
     const reactions = {}
     for (const [zone, relName] of Object.entries(reactionsMap)) {
       if (savedUrls[relName]) reactions[zone] = savedUrls[relName]
+    }
+    const reactionsMov = {}
+    for (const [zone, relName] of Object.entries(reactionsMovMap)) {
+      if (savedUrls[relName]) reactionsMov[zone] = savedUrls[relName]
     }
     const bgUrl = bgFile && savedUrls[bgFile] ? savedUrls[bgFile] : ''
 
@@ -1257,6 +1317,7 @@ export class JPhoneStore {
       mediaType: primaryMediaType,
       poses,
       reactions,
+      ...(Object.keys(reactionsMov).length ? { reactionsMov } : {}),
       bgUrl,
       createdAt: Date.now(),
       updatedAt: Date.now(),

@@ -400,7 +400,10 @@ export async function installGitPackage(repoUrl, { store, skillsDir = '', fetchI
   if (m.type === 'character') {
     const files = {}
     const posesMap = {}
+    const posesMovMap = {}
+    const posesStackedMap = {}
     const reactionsMap = {}
+    const reactionsMovMap = {}
     let bgFile = ''
     const isDirectMedia = /\.(webm|mp4|mov|png|webp|gif|jpg|jpeg)$/i.test(m.entry)
     if (isDirectMedia) {
@@ -415,32 +418,58 @@ export async function installGitPackage(repoUrl, { store, skillsDir = '', fetchI
         return { ok: false, error: 'character entry is not valid JSON' }
       }
       const lav = (charSpec && typeof charSpec.lav === 'object' && charSpec.lav) ? charSpec.lav : {}
+      const lavMov = (charSpec && typeof charSpec.lavMov === 'object' && charSpec.lavMov) ? charSpec.lavMov : {}
+      const lavStacked = (charSpec && typeof charSpec.lavStacked === 'object' && charSpec.lavStacked) ? charSpec.lavStacked : {}
+      const fetchOnce = async (rel) => {
+        if (!files[rel]) files[rel] = await fetchGitBinaryFile(parsed, rel, { fetchImpl, useGhCli })
+      }
       const poseAliases = [
-        ['stand', lav.stand || lav.idle],
-        ['desk', lav.desk],
-        ['glance', lav.glance],
-        ['sit', lav.sit],
+        ['stand', lav.stand || lav.idle, lavMov.stand || lavMov.idle, lavStacked.stand || lavStacked.idle],
+        ['desk', lav.desk, lavMov.desk, lavStacked.desk],
+        ['glance', lav.glance, lavMov.glance, lavStacked.glance],
+        ['sit', lav.sit, lavMov.sit, lavStacked.sit],
       ]
-      for (const [poseKey, rel] of poseAliases) {
-        if (typeof rel === 'string' && isSafeRelPath(rel)) {
-          files[rel] = await fetchGitBinaryFile(parsed, rel, { fetchImpl, useGhCli })
-          posesMap[poseKey] = rel
+      for (const [poseKey, rawEntry, rawMov, rawStacked] of poseAliases) {
+        const primaryRel = typeof rawEntry === 'string'
+          ? rawEntry
+          : (rawEntry && typeof rawEntry === 'object' ? (rawEntry.webm || rawEntry.url || rawEntry.mov || rawEntry.stacked) : '')
+        const movRel = typeof rawMov === 'string'
+          ? rawMov
+          : (rawEntry && typeof rawEntry === 'object' && typeof rawEntry.mov === 'string' ? rawEntry.mov : '')
+        const stackedRel = typeof rawStacked === 'string'
+          ? rawStacked
+          : (rawEntry && typeof rawEntry === 'object' && typeof rawEntry.stacked === 'string' ? rawEntry.stacked : '')
+        if (typeof primaryRel === 'string' && isSafeRelPath(primaryRel)) {
+          await fetchOnce(primaryRel)
+          posesMap[poseKey] = primaryRel
+        }
+        if (typeof movRel === 'string' && isSafeRelPath(movRel)) {
+          await fetchOnce(movRel)
+          posesMovMap[poseKey] = movRel
+        }
+        if (typeof stackedRel === 'string' && isSafeRelPath(stackedRel)) {
+          await fetchOnce(stackedRel)
+          posesStackedMap[poseKey] = stackedRel
         }
       }
       const reactAliases = [
-        ['head', lav.touch_head || lav.head],
-        ['body', lav.touch_body || lav.body],
-        ['tail', lav.touch_tail || lav.tail],
+        ['head', lav.touch_head || lav.head, lavMov.touch_head || lavMov.head],
+        ['body', lav.touch_body || lav.body, lavMov.touch_body || lavMov.body],
+        ['tail', lav.touch_tail || lav.tail, lavMov.touch_tail || lavMov.tail],
       ]
-      for (const [zone, rel] of reactAliases) {
+      for (const [zone, rel, movRel] of reactAliases) {
         if (typeof rel === 'string' && isSafeRelPath(rel)) {
-          files[rel] = await fetchGitBinaryFile(parsed, rel, { fetchImpl, useGhCli })
+          await fetchOnce(rel)
           reactionsMap[zone] = rel
+        }
+        if (typeof movRel === 'string' && isSafeRelPath(movRel)) {
+          await fetchOnce(movRel)
+          reactionsMovMap[zone] = movRel
         }
       }
       const rawBg = typeof charSpec.bg === 'string' ? charSpec.bg : (typeof lav.bg === 'string' ? lav.bg : '')
       if (rawBg && isSafeRelPath(rawBg)) {
-        files[rawBg] = await fetchGitBinaryFile(parsed, rawBg, { fetchImpl, useGhCli })
+        await fetchOnce(rawBg)
         bgFile = rawBg
       }
     }
@@ -451,7 +480,10 @@ export async function installGitPackage(repoUrl, { store, skillsDir = '', fetchI
       source: `git:${parsed.provider}:${parsed.owner}/${parsed.repo}`,
       files,
       posesMap,
+      posesMovMap,
+      posesStackedMap,
       reactionsMap,
+      reactionsMovMap,
       bgFile,
       activate: true,
     })

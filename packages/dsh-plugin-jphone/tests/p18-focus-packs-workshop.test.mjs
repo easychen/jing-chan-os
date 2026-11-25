@@ -86,12 +86,28 @@ test('P18 Focus Custom Video Import: upload, serve, select, sandbox isolation & 
       assert.equal(delOk.ok, true)
       assert.equal(delOk.packs.length, 1)
 
-      // 6. Focus HTML exposes import button & window.jing.focus bridge
+      // 6. Focus HTML exposes import button, A+B WebKit transparency hooks & valid inline JS
       const focusHtml = await fetch(`${base}/jphone/miniapp/jing-focus`).then((r) => r.text())
       assert.match(focusHtml, /btn-import-focus-video/)
       assert.match(focusHtml, /focus-pack-list/)
       assert.match(focusHtml, /window\.jing =/)
       assert.match(focusHtml, /uploadMedia\(payload\)/)
+      assert.match(focusHtml, /noise-tile-bg/)
+      assert.match(focusHtml, /xiaojing_idle\.mov\?v=m2v6/)
+      assert.match(focusHtml, /custom-lav-canvas/)
+      assert.match(focusHtml, /createStackedAlphaRenderer/)
+      for (const m of focusHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
+        assert.doesNotThrow(() => new Function(m[1]), 'Focus inline <script> must have valid JS syntax')
+      }
+
+      // 7. Built-in official .mov serves 206 Partial Content for Safari/WebKit byte-range probes
+      const movRangeRes = await fetch(`${base}/jphone/media/lav/xiaojing/xiaojing_idle.mov`, {
+        headers: { range: 'bytes=0-1023' },
+      })
+      assert.equal(movRangeRes.status, 206)
+      assert.equal(movRangeRes.headers.get('content-type'), 'video/quicktime')
+      assert.match(String(movRangeRes.headers.get('content-range') || ''), /^bytes 0-1023\/\d+$/)
+      assert.equal((await movRangeRes.arrayBuffer()).byteLength, 1024)
     } finally {
       srv.closeAllConnections?.(); srv.close()
     }
@@ -155,6 +171,54 @@ test('P18 Workshop Character Focus Pack: installGitPackage downloads LAV clips i
   }
 })
 
+test('P20 Focus WebKit Hybrid A+B: workshop lavMov/lavStacked + auto stacked-alpha mp4 fallback for webm uploads', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const { fileURLToPath } = await import('node:url')
+  const dir = await mkdtemp(join(tmpdir(), 'jphone-p20-ab-'))
+  try {
+    const store = await JPhoneStore.open(dir)
+    const handler = createJPhoneHttpHandler({ store, orchestrator: null })
+    const srv = createServer(handler)
+    await new Promise((r) => srv.listen(0, '127.0.0.1', r))
+    const base = `http://127.0.0.1:${srv.address().port}`
+    try {
+      // 1. Official builtin pack exposes movUrl (Strategy A) alongside webm url
+      const list0 = await fetch(`${base}/jphone/api/focus/packs`).then((r) => r.json())
+      const builtin = list0.packs.find((p) => p.id === 'xiaojing')
+      assert.ok(builtin.poses.stand.movUrl.includes('xiaojing_idle.mov'))
+      assert.ok(builtin.reactionsMov.head.includes('xiaojing_touch_head.mov'))
+
+      // 2. Uploading a real VP9+Alpha .webm without .mov auto-generates Strategy B stacked-alpha .mp4
+      const realWebm = await readFile(fileURLToPath(new URL('../assets/lav/xiaojing/xiaojing_idle.webm', import.meta.url)))
+      const up = await fetch(`${base}/jphone/api/focus/packs/upload`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: '测试透明角色',
+          filename: 'custom_idle.webm',
+          dataBase64: realWebm.toString('base64'),
+        }),
+      }).then((r) => r.json())
+      assert.equal(up.ok, true)
+      assert.ok(up.pack.poses.stand.url.endsWith('.webm'))
+      assert.ok(up.pack.poses.stand.stackedUrl && up.pack.poses.stand.stackedUrl.endsWith('_stacked.mp4'), 'webm upload without .mov should auto-generate stackedUrl mp4')
+
+      // 3. Stacked mp4 supports HTTP 206 Range for Safari/WebKit playback
+      const stackedRange = await fetch(`${base}${up.pack.poses.stand.stackedUrl}`, {
+        headers: { range: 'bytes=0-511' },
+      })
+      assert.equal(stackedRange.status, 206)
+      assert.equal(stackedRange.headers.get('content-type'), 'video/mp4')
+      assert.equal((await stackedRange.arrayBuffer()).byteLength, 512)
+    } finally {
+      srv.closeAllConnections?.()
+      await new Promise((r) => srv.close(r))
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
 test('P18 Focus Built-in Audio: all 12 noise tracks and 6 Lo-Fi tracks return 200 audio/mpeg', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'jphone-p18-audio-'))
   try {
@@ -176,6 +240,13 @@ test('P18 Focus Built-in Audio: all 12 noise tracks and 6 Lo-Fi tracks return 20
         assert.equal(res.headers.get('content-type'), 'audio/mpeg')
         const buf = Buffer.from(await res.arrayBuffer())
         assert.ok(buf.length > 10_000, `Noise ${item.file} should be >10KB, got ${buf.length}`)
+
+        assert.ok(item.bg && item.bg.startsWith('/jphone/media/focus/noise-bg/'), `Noise ${item.id} should define atmospheric card bg`)
+        const bgRes = await fetch(`${base}${item.bg}`)
+        assert.equal(bgRes.status, 200, `Noise card bg ${item.bg} should return 200`)
+        assert.equal(bgRes.headers.get('content-type'), 'image/jpeg')
+        const bgBuf = Buffer.from(await bgRes.arrayBuffer())
+        assert.ok(bgBuf.length > 8_000, `Noise card bg ${item.bg} should be >8KB, got ${bgBuf.length}`)
       }
       for (const item of FOCUS_LOFI_TRACKS) {
         const res = await fetch(`${base}/jphone/media/focus/music/${encodeURIComponent(item.file)}`)

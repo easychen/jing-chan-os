@@ -7,18 +7,18 @@
  */
 
 export const FOCUS_NOISE_TRACKS = [
-  { id: 'rain_light', name: '小雨', file: '小雨.mp3', emoji: '雨', defaultVol: 0.65 },
-  { id: 'waves', name: '海浪', file: '海浪.mp3', emoji: '浪', defaultVol: 0.55 },
-  { id: 'cafe', name: '咖啡馆', file: '咖啡馆.mp3', emoji: '咖', defaultVol: 0.50 },
-  { id: 'fireplace', name: '炉火', file: '炉火.mp3', emoji: '火', defaultVol: 0.50 },
-  { id: 'wind', name: '微风', file: '微风.mp3', emoji: '风', defaultVol: 0.45 },
-  { id: 'stream', name: '小溪', file: '小溪.mp3', emoji: '溪', defaultVol: 0.50 },
-  { id: 'snow', name: '雪夜', file: '雪夜.mp3', emoji: '雪', defaultVol: 0.45 },
-  { id: 'rain_heavy', name: '大雨', file: '大雨.mp3', emoji: '暴', defaultVol: 0.40 },
-  { id: 'birds', name: '鸟鸣', file: '鸟鸣.mp3', emoji: '鸟', defaultVol: 0.40 },
-  { id: 'office', name: '办公室', file: '办公室.mp3', emoji: '办', defaultVol: 0.35 },
-  { id: 'street', name: '市街', file: '市街.mp3', emoji: '街', defaultVol: 0.35 },
-  { id: 'thunder', name: '雷鸣', file: '雷鸣.mp3', emoji: '鸣', defaultVol: 0.35 },
+  { id: 'rain_light', name: '小雨', en: 'Gentle Rain', file: '小雨.mp3', emoji: '雨', bg: '/jphone/media/focus/noise-bg/rain_light.jpg', accent: '#38BDF8', glow: 'rgba(56, 189, 248, 0.42)', defaultVol: 0.65 },
+  { id: 'waves', name: '海浪', en: 'Ocean Waves', file: '海浪.mp3', emoji: '浪', bg: '/jphone/media/focus/noise-bg/waves.jpg', accent: '#22D3EE', glow: 'rgba(34, 211, 238, 0.42)', defaultVol: 0.55 },
+  { id: 'cafe', name: '咖啡馆', en: 'Midnight Café', file: '咖啡馆.mp3', emoji: '咖', bg: '/jphone/media/focus/noise-bg/cafe.jpg', accent: '#F59E0B', glow: 'rgba(245, 158, 11, 0.42)', defaultVol: 0.50 },
+  { id: 'fireplace', name: '炉火', en: 'Hearth Fire', file: '炉火.mp3', emoji: '火', bg: '/jphone/media/focus/noise-bg/fireplace.jpg', accent: '#FB923C', glow: 'rgba(251, 146, 60, 0.45)', defaultVol: 0.50 },
+  { id: 'wind', name: '微风', en: 'Pine Breeze', file: '微风.mp3', emoji: '风', bg: '/jphone/media/focus/noise-bg/wind.jpg', accent: '#7DD3FC', glow: 'rgba(125, 211, 252, 0.38)', defaultVol: 0.45 },
+  { id: 'stream', name: '小溪', en: 'Forest Brook', file: '小溪.mp3', emoji: '溪', bg: '/jphone/media/focus/noise-bg/stream.jpg', accent: '#34D399', glow: 'rgba(52, 211, 153, 0.42)', defaultVol: 0.50 },
+  { id: 'snow', name: '雪夜', en: 'Snowy Night', file: '雪夜.mp3', emoji: '雪', bg: '/jphone/media/focus/noise-bg/snow.jpg', accent: '#BAE6FD', glow: 'rgba(186, 230, 253, 0.42)', defaultVol: 0.45 },
+  { id: 'rain_heavy', name: '大雨', en: 'Heavy Rain', file: '大雨.mp3', emoji: '暴', bg: '/jphone/media/focus/noise-bg/rain_heavy.jpg', accent: '#60A5FA', glow: 'rgba(96, 165, 250, 0.42)', defaultVol: 0.40 },
+  { id: 'birds', name: '鸟鸣', en: 'Dawn Chorus', file: '鸟鸣.mp3', emoji: '鸟', bg: '/jphone/media/focus/noise-bg/birds.jpg', accent: '#86EFAC', glow: 'rgba(134, 239, 172, 0.40)', defaultVol: 0.40 },
+  { id: 'office', name: '办公室', en: 'Quiet Studio', file: '办公室.mp3', emoji: '办', bg: '/jphone/media/focus/noise-bg/office.jpg', accent: '#A5B4FC', glow: 'rgba(165, 180, 252, 0.40)', defaultVol: 0.35 },
+  { id: 'street', name: '市街', en: 'City Twilight', file: '市街.mp3', emoji: '街', bg: '/jphone/media/focus/noise-bg/street.jpg', accent: '#FDA4AF', glow: 'rgba(253, 164, 175, 0.40)', defaultVol: 0.35 },
+  { id: 'thunder', name: '雷鸣', en: 'Distant Thunder', file: '雷鸣.mp3', emoji: '鸣', bg: '/jphone/media/focus/noise-bg/thunder.jpg', accent: '#A78BFA', glow: 'rgba(167, 139, 250, 0.44)', defaultVol: 0.35 },
 ]
 
 export const FOCUS_LOFI_TRACKS = [
@@ -805,34 +805,312 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   .scene-name { font-size: 13.5px; font-weight: 600; color: #fff; }
   .scene-desc { font-size: 10.5px; color: rgba(248,250,252,0.72); margin-top: 2px; }
 
-  /* White Noise Mixer Grid */
-  .noise-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .noise-tile {
-    background: rgba(255,255,255,0.06);
-    border: 0.5px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 10px 8px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.16s;
-  }
-  .noise-tile.on { background: rgba(56,189,248,0.22); border-color: rgba(56,189,248,0.65); }
-  .noise-badge {
-    width: 30px;
-    height: 30px;
-    border-radius: 10px;
-    margin: 0 auto 5px;
+  /* White Noise Atmospheric Soundscape Cards */
+  .noise-toolbar {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    background: rgba(255,255,255,0.12);
-    color: #E0F2FE;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 11px;
+    margin-bottom: 11px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 0.5px solid rgba(255, 255, 255, 0.09);
   }
-  .noise-tile.on .noise-badge { background: #38BDF8; color: #091224; }
-  .noise-name { font-size: 12px; font-weight: 600; }
-  .noise-vol { width: 100%; margin-top: 6px; accent-color: #38BDF8; height: 4px; }
+  .noise-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    font-size: 11.5px;
+    color: rgba(226, 232, 240, 0.78);
+  }
+  .noise-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex: 0 0 6px;
+    background: rgba(148, 163, 184, 0.48);
+    transition: background 0.25s ease, box-shadow 0.25s ease;
+  }
+  .noise-live-dot.active {
+    background: #38BDF8;
+    box-shadow: 0 0 9px rgba(56, 189, 248, 0.85);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  .noise-summary-txt {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .noise-mute-btn {
+    border: 0.5px solid rgba(248, 113, 113, 0.28);
+    background: rgba(248, 113, 113, 0.12);
+    color: #FCA5A5;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease, transform 0.12s ease;
+  }
+  .noise-mute-btn:active { transform: scale(0.95); }
+  .noise-mute-btn:hover { background: rgba(248, 113, 113, 0.22); border-color: rgba(248, 113, 113, 0.45); }
+  .noise-mute-btn.idle { opacity: 0.52; }
+
+  .noise-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .noise-tile {
+    --tile-accent: #38BDF8;
+    --tile-glow: rgba(56, 189, 248, 0.42);
+    --vol-pct: 50%;
+    position: relative;
+    height: 118px;
+    border-radius: 18px;
+    overflow: hidden;
+    padding: 10px 11px 9px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: left;
+    cursor: pointer;
+    background: #0D1526;
+    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transition: border-color 0.26s ease, box-shadow 0.28s ease, transform 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+    isolation: isolate;
+  }
+  .noise-tile:active { transform: scale(0.985); }
+  .noise-tile.on {
+    border-color: var(--tile-accent);
+    box-shadow:
+      0 10px 26px rgba(0, 0, 0, 0.46),
+      0 0 0 1px var(--tile-glow),
+      0 0 20px -4px var(--tile-glow),
+      inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  }
+  .noise-tile-bg {
+    position: absolute;
+    inset: -2px;
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+    filter: brightness(0.76) saturate(0.86);
+    transform: scale(1.01);
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.35s ease;
+    pointer-events: none;
+  }
+  .noise-tile.on .noise-tile-bg {
+    transform: scale(1.07);
+    filter: brightness(0.96) saturate(1.14);
+  }
+  .noise-tile-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(6, 10, 20, 0.24) 0%,
+      rgba(6, 10, 20, 0.28) 42%,
+      rgba(6, 10, 20, 0.86) 100%
+    );
+    transition: opacity 0.28s ease;
+  }
+  .noise-tile.on .noise-tile-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(6, 10, 20, 0.12) 0%,
+      rgba(6, 10, 20, 0.24) 45%,
+      rgba(6, 10, 20, 0.84) 100%
+    );
+  }
+  .noise-tile-top,
+  .noise-tile-bottom {
+    position: relative;
+    z-index: 2;
+  }
+  .noise-tile-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .noise-ico {
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 13, 26, 0.46);
+    border: 0.5px solid rgba(255, 255, 255, 0.20);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: rgba(241, 245, 249, 0.84);
+    transition: background 0.24s ease, border-color 0.24s ease, color 0.24s ease, box-shadow 0.24s ease;
+  }
+  .noise-ico svg { display: block; }
+  .noise-tile.on .noise-ico {
+    background: var(--tile-accent);
+    border-color: rgba(255, 255, 255, 0.65);
+    color: #07101F;
+    box-shadow: 0 4px 12px var(--tile-glow);
+  }
+  .noise-state-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: rgba(8, 13, 26, 0.52);
+    border: 0.5px solid rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 10px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: rgba(248, 250, 252, 0.92);
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .noise-tile.on .noise-state-pill {
+    opacity: 1;
+    transform: translateY(0);
+    border-color: rgba(255, 255, 255, 0.26);
+  }
+  .noise-eq {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 1.5px;
+    height: 9px;
+  }
+  .noise-eq i {
+    display: block;
+    width: 2px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--tile-accent);
+    transform-origin: bottom center;
+  }
+  .noise-tile.on .noise-eq i:nth-child(1) { animation: eqBar 0.86s ease-in-out infinite 0.00s; }
+  .noise-tile.on .noise-eq i:nth-child(2) { animation: eqBar 0.68s ease-in-out infinite 0.18s; }
+  .noise-tile.on .noise-eq i:nth-child(3) { animation: eqBar 0.96s ease-in-out infinite 0.09s; }
+  .noise-tile-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .noise-title-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .noise-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.25px;
+    color: #FFFFFF;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.72);
+    line-height: 1.2;
+  }
+  .noise-en {
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.35px;
+    color: rgba(226, 232, 240, 0.68);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.68);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .noise-fader-wrap {
+    padding: 7px 0 1px;
+    display: flex;
+    align-items: center;
+  }
+  .noise-vol {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    margin: 0;
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.54) 0%,
+      rgba(255, 255, 255, 0.54) var(--vol-pct),
+      rgba(255, 255, 255, 0.16) var(--vol-pct),
+      rgba(255, 255, 255, 0.16) 100%
+    );
+    transition: height 0.16s ease;
+  }
+  .noise-tile.on .noise-vol {
+    background: linear-gradient(
+      90deg,
+      var(--tile-accent) 0%,
+      var(--tile-accent) var(--vol-pct),
+      rgba(255, 255, 255, 0.22) var(--vol-pct),
+      rgba(255, 255, 255, 0.22) 100%
+    );
+  }
+  .noise-vol::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: transparent;
+  }
+  .noise-vol::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.90);
+    border: 1.5px solid rgba(15, 23, 42, 0.35);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.52);
+    transition: transform 0.14s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .noise-tile.on .noise-vol::-webkit-slider-thumb {
+    background: #FFFFFF;
+    border-color: var(--tile-accent);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55), 0 0 8px var(--tile-glow);
+  }
+  .noise-vol:active::-webkit-slider-thumb {
+    transform: scale(1.24);
+  }
+  .noise-vol::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: transparent;
+  }
+  .noise-vol::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1.5px solid rgba(15, 23, 42, 0.35);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.52);
+  }
+  .noise-tile.on .noise-vol::-moz-range-thumb {
+    background: #FFFFFF;
+    border-color: var(--tile-accent);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.55), 0 0 8px var(--tile-glow);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .noise-tile.on .noise-eq i, .noise-live-dot.active { animation: none !important; }
+  }
 
   /* Lo-Fi Album Showcase & Track List */
   .icon-btn svg, .mode-icon-btn svg, .mode-pill svg, .album-cta-btn svg, .album-sec-btn svg, .album-del-btn svg, .album-badge svg, .lofi-eq svg {
@@ -1151,17 +1429,39 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     <!-- Unclipped Stage-Level Speech Bubble -->
     <div id="speech-bubble" class="speech-bubble">今天也要和小鲸同学一起进入心流哦～</div>
 
-    <!-- 3. Large Commanding Multi-Pose VP9+Alpha LAV Companion -->
+    <!-- 3. Large Commanding Multi-Pose Transparent LAV Companion (Strategy A: HEVC-Alpha .mov for WebKit + VP9-Alpha .webm for Chromium; Strategy B: Stacked-Alpha WebGL fallback) -->
     <div id="lav-zone" class="lav-zone">
       <div id="lav-halo" class="lav-halo"></div>
-      <video id="xj-pose-stand" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_idle.webm?v=m2v4" poster="/jphone/media/lav/xiaojing/xiaojing_idle.png?v=m2v4" autoplay loop muted playsinline style="opacity:1"></video>
-      <video id="xj-pose-desk" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_desk.webm?v=m2v4" poster="/jphone/media/lav/xiaojing/xiaojing_desk.png?v=m2v4" loop muted playsinline preload="auto" style="opacity:0"></video>
-      <video id="xj-pose-glance" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_glance.webm?v=m2v4" poster="/jphone/media/lav/xiaojing/xiaojing_glance.png?v=m2v4" loop muted playsinline preload="auto" style="opacity:0"></video>
-      <video id="xj-pose-sit" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_sit.webm?v=m2v4" poster="/jphone/media/lav/xiaojing/xiaojing_sit.png?v=m2v4" loop muted playsinline preload="auto" style="opacity:0"></video>
-      <video id="xj-react-head" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_touch_head.webm?v=m2v4" muted playsinline preload="auto" style="opacity:0"></video>
-      <video id="xj-react-body" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_touch_body.webm?v=m2v4" muted playsinline preload="auto" style="opacity:0"></video>
-      <video id="xj-react-tail" class="lav-vid" src="/jphone/media/lav/xiaojing/xiaojing_touch_tail.webm?v=m2v4" muted playsinline preload="auto" style="opacity:0"></video>
-      <video id="custom-lav-vid" class="lav-vid" autoplay loop muted playsinline style="opacity:0;pointer-events:none"></video>
+      <video id="xj-pose-stand" class="lav-vid" poster="/jphone/media/lav/xiaojing/xiaojing_idle.png?v=m2v4" autoplay loop muted playsinline style="opacity:1">
+        <source src="/jphone/media/lav/xiaojing/xiaojing_idle.mov?v=m2v6" type='video/quicktime; codecs="hvc1"' />
+        <source src="/jphone/media/lav/xiaojing/xiaojing_idle.webm?v=m2v4" type="video/webm" />
+      </video>
+      <video id="xj-pose-desk" class="lav-vid" poster="/jphone/media/lav/xiaojing/xiaojing_desk.png?v=m2v4" loop muted playsinline preload="auto" style="opacity:0">
+        <source src="/jphone/media/lav/xiaojing/xiaojing_desk.mov?v=m2v6" type='video/quicktime; codecs="hvc1"' />
+        <source src="/jphone/media/lav/xiaojing/xiaojing_desk.webm?v=m2v4" type="video/webm" />
+      </video>
+      <video id="xj-pose-glance" class="lav-vid" poster="/jphone/media/lav/xiaojing/xiaojing_glance.png?v=m2v4" loop muted playsinline preload="auto" style="opacity:0">
+        <source src="/jphone/media/lav/xiaojing/xiaojing_glance.mov?v=m2v6" type='video/quicktime; codecs="hvc1"' />
+        <source src="/jphone/media/lav/xiaojing/xiaojing_glance.webm?v=m2v4" type="video/webm" />
+      </video>
+      <video id="xj-pose-sit" class="lav-vid" poster="/jphone/media/lav/xiaojing/xiaojing_sit.png?v=m2v4" loop muted playsinline preload="auto" style="opacity:0">
+        <source src="/jphone/media/lav/xiaojing/xiaojing_sit.mov?v=m2v6" type='video/quicktime; codecs="hvc1"' />
+        <source src="/jphone/media/lav/xiaojing/xiaojing_sit.webm?v=m2v4" type="video/webm" />
+      </video>
+      <video id="xj-react-head" class="lav-vid" muted playsinline preload="auto" style="opacity:0">
+        <source src="/jphone/media/lav/xiaojing/xiaojing_touch_head.mov?v=m2v6" type='video/quicktime; codecs="hvc1"' />
+        <source src="/jphone/media/lav/xiaojing/xiaojing_touch_head.webm?v=m2v4" type="video/webm" />
+      </video>
+      <video id="xj-react-body" class="lav-vid" muted playsinline preload="auto" style="opacity:0">
+        <source src="/jphone/media/lav/xiaojing/xiaojing_touch_body.mov?v=m2v6" type='video/quicktime; codecs="hvc1"' />
+        <source src="/jphone/media/lav/xiaojing/xiaojing_touch_body.webm?v=m2v4" type="video/webm" />
+      </video>
+      <video id="xj-react-tail" class="lav-vid" muted playsinline preload="auto" style="opacity:0">
+        <source src="/jphone/media/lav/xiaojing/xiaojing_touch_tail.mov?v=m2v6" type='video/quicktime; codecs="hvc1"' />
+        <source src="/jphone/media/lav/xiaojing/xiaojing_touch_tail.webm?v=m2v4" type="video/webm" />
+      </video>
+      <video id="custom-lav-vid" class="lav-vid" autoplay loop muted playsinline crossorigin="anonymous" style="opacity:0;pointer-events:none"></video>
+      <canvas id="custom-lav-canvas" class="lav-vid" style="opacity:0;pointer-events:none"></canvas>
       <img id="custom-lav-img" class="lav-vid" alt="" style="opacity:0;pointer-events:none;object-fit:contain;object-position:bottom center" />
       <div id="lav-hotspots" class="lav-hotspots">
         <div class="lav-hotspot" data-zone="head" title="摸摸小鲸的头" style="left:23%;top:4%;width:52%;height:31%;"></div>
@@ -1220,9 +1520,12 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
             <button class="seg-btn" data-audio-tab="lofi" type="button">专辑歌单</button>
           </div>
           <div id="sub-noise">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:var(--sub)">
-              <span>多轨自由叠加 · 退出后台继续播放</span>
-              <button id="btn-stop-all" class="sheet-close" style="background:rgba(248,113,113,0.18);color:#FCA5A5">静音</button>
+            <div class="noise-toolbar">
+              <div class="noise-toolbar-left">
+                <span id="noise-live-dot" class="noise-live-dot"></span>
+                <span id="noise-summary-txt" class="noise-summary-txt">多轨自由叠加 · 退出后台继续播放</span>
+              </div>
+              <button id="btn-stop-all" class="noise-mute-btn idle" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/></svg><span>静音</span></button>
             </div>
             <div class="noise-grid" id="noise-grid"></div>
           </div>
@@ -1263,7 +1566,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
               <span class="pose-card-desc">慵懒小憩 · 温柔治愈</span>
             </button>
           </div>
-          <div id="focus-pack-hint" class="pack-hint">支持导入透明 .webm（VP9+Alpha）/ .mp4 / 透明动图，也可以在「创意工坊」下载社区角色包，电脑与手机自动同步。</div>
+          <div id="focus-pack-hint" class="pack-hint">支持导入透明 .mov（HEVC+Alpha）/ .webm（VP9+Alpha，自动适配 WebKit 透明）/ Stacked-Alpha .mp4 / 透明动图，也可以在「创意工坊」下载社区角色包。</div>
         </div>
         <div id="pane-pomo" class="hidden">
           <div class="preset-row">
@@ -1463,6 +1766,20 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     order: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>',
     shuffle: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>',
     single: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/><path d="M11 10h1v4"/></svg>',
+  };
+  const NOISE_ICONS = {
+    rain_light: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M8 19v1"/><path d="M8 14v1"/><path d="M16 19v1"/><path d="M16 14v1"/><path d="M12 21v1"/><path d="M12 16v1"/></svg>',
+    waves: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>',
+    cafe: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg>',
+    fireplace: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+    wind: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>',
+    stream: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></svg>',
+    snow: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/><path d="m20 16-4-4 4-4"/><path d="m4 8 4 4-4 4"/><path d="m16 4-4 4-4-4"/><path d="m8 20 4-4 4 4"/></svg>',
+    rain_heavy: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>',
+    birds: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h.01"/><path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20"/><path d="m20 7 2 .5-2 .5"/><path d="M10 18v3"/><path d="M14 17.75V21"/><path d="M7 18a6 6 0 0 0 3.84-10.61"/></svg>',
+    office: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14 5-3 3 2 7 8-8-7-2Z"/><path d="m14 5-3 3-3-3 3-3 3 3Z"/><path d="M9.5 6.5 4 12l3 6"/><path d="M3 22v-2c0-1.1.9-2 2-2h4a2 2 0 0 1 2 2v2H3Z"/></svg>',
+    street: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>',
+    thunder: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973"/><path d="m13 12-3 5h4l-3 5"/></svg>',
   };
 
   function buildFallbackAlbums() {
@@ -2147,28 +2464,90 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
       nowSub.textContent = '三张 Origo 专辑 · 顺序/随机/单曲循环';
     }
 
-    // Update Noise Tiles
-    noiseGrid.innerHTML = '';
+    // Update Noise Summary Bar & Atmospheric Soundscape Tiles (persistent DOM for 60fps fader drag)
+    const noiseLiveDot = document.getElementById('noise-live-dot');
+    const noiseSummaryTxt = document.getElementById('noise-summary-txt');
+    const stopAllBtn = document.getElementById('btn-stop-all');
+    if (noiseLiveDot) noiseLiveDot.classList.toggle('active', activeNoiseIds.length > 0);
+    if (noiseSummaryTxt) {
+      if (activeNoiseIds.length > 0) {
+        const mixPreview = activeNoiseIds.map(id => (activeNoises[id]?.name || id)).slice(0, 3).join(' · ');
+        noiseSummaryTxt.textContent = '混音中 (' + activeNoiseIds.length + ') · ' + mixPreview + (activeNoiseIds.length > 3 ? '…' : '');
+      } else {
+        noiseSummaryTxt.textContent = '轻触画面开启 · 多轨叠加后台持续播放';
+      }
+    }
+    if (stopAllBtn) stopAllBtn.classList.toggle('idle', !st.hasActiveAudio && activeNoiseIds.length === 0);
+
+    if (!noiseGrid._tileMap) {
+      noiseGrid._tileMap = new Map();
+      noiseGrid.innerHTML = '';
+      for (const item of NOISES) {
+        const tile = document.createElement('div');
+        tile.className = 'noise-tile';
+        tile.dataset.noiseId = item.id;
+        tile.style.setProperty('--tile-accent', item.accent || '#38BDF8');
+        tile.style.setProperty('--tile-glow', item.glow || 'rgba(56, 189, 248, 0.42)');
+        const icoSvg = NOISE_ICONS[item.id] || LUCIDE.audioLines;
+        tile.innerHTML =
+          '<div class="noise-tile-bg"></div>' +
+          '<div class="noise-tile-scrim"></div>' +
+          '<div class="noise-tile-top">' +
+            '<span class="noise-ico">' + icoSvg + '</span>' +
+            '<span class="noise-state-pill">' +
+              '<span class="noise-eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
+              '<span class="noise-pct">' + Math.round((item.defaultVol || 0.5) * 100) + '%</span>' +
+            '</span>' +
+          '</div>' +
+          '<div class="noise-tile-bottom">' +
+            '<div class="noise-title-line">' +
+              '<span class="noise-name">' + item.name + '</span>' +
+              '<span class="noise-en">' + (item.en || '') + '</span>' +
+            '</div>' +
+            '<div class="noise-fader-wrap">' +
+              '<input class="noise-vol" type="range" min="0.05" max="1" step="0.05" value="' + item.defaultVol + '" aria-label="' + item.name + ' 音量" />' +
+            '</div>' +
+          '</div>';
+        const bgEl = tile.querySelector('.noise-tile-bg');
+        if (bgEl && item.bg) bgEl.style.backgroundImage = 'url("' + item.bg + '")';
+        const slider = tile.querySelector('input');
+        const pctEl = tile.querySelector('.noise-pct');
+        tile.addEventListener('click', (e) => {
+          if (e.target.closest('.noise-fader-wrap')) return;
+          const curSt = getMediaState();
+          const curInfo = (curSt.noises || {})[item.id];
+          const curOn = !!(curInfo && curInfo.active !== false);
+          const curVol = curInfo ? curInfo.volume : Number(slider.value || item.defaultVol);
+          setNoiseChannel(item, !curOn, curVol);
+        });
+        slider.addEventListener('input', (e) => {
+          e.stopPropagation();
+          const v = Number(e.target.value);
+          const pct = Math.round(v * 100);
+          const trackPct = Math.max(0, Math.min(100, ((v - 0.05) / 0.95) * 100));
+          tile.style.setProperty('--vol-pct', trackPct.toFixed(1) + '%');
+          if (pctEl) pctEl.textContent = pct + '%';
+          setNoiseChannel(item, true, v);
+        });
+        noiseGrid.appendChild(tile);
+        noiseGrid._tileMap.set(item.id, { tile, slider, pctEl });
+      }
+    }
     for (const item of NOISES) {
+      const refs = noiseGrid._tileMap.get(item.id);
+      if (!refs) continue;
       const info = activeNoises[item.id];
       const on = !!(info && info.active !== false);
-      const vol = info ? info.volume : item.defaultVol;
-      const tile = document.createElement('div');
-      tile.className = 'noise-tile' + (on ? ' on' : '');
-      tile.innerHTML =
-        '<div class="noise-badge">' + item.emoji + '</div>' +
-        '<div class="noise-name">' + item.name + '</div>' +
-        '<input class="noise-vol" type="range" min="0.05" max="1" step="0.05" value="' + vol + '" />';
-      tile.addEventListener('click', (e) => {
-        if (e.target.tagName === 'INPUT') return;
-        setNoiseChannel(item, !on, vol);
-      });
-      const slider = tile.querySelector('input');
-      slider.addEventListener('input', (e) => {
-        const v = Number(e.target.value);
-        setNoiseChannel(item, true, v);
-      });
-      noiseGrid.appendChild(tile);
+      const vol = info ? info.volume : Number(refs.slider.value || item.defaultVol);
+      const clampedVol = Math.max(0.05, Math.min(1, vol));
+      const pct = Math.round(clampedVol * 100);
+      const trackPct = Math.max(0, Math.min(100, ((clampedVol - 0.05) / 0.95) * 100));
+      refs.tile.classList.toggle('on', on);
+      refs.tile.style.setProperty('--vol-pct', trackPct.toFixed(1) + '%');
+      if (refs.pctEl) refs.pctEl.textContent = pct + '%';
+      if (document.activeElement !== refs.slider) {
+        refs.slider.value = String(vol);
+      }
     }
 
     // Update 3-Album Strip
@@ -2574,8 +2953,9 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     saveCfg();
   });
 
-  // ---- Custom & Workshop Focus Video / Character Packs ----
+  // ---- Custom & Workshop Focus Video / Character Packs (Hybrid A: HEVC-Alpha .mov + B: Stacked-Alpha WebGL) ----
   const customLavVid = document.getElementById('custom-lav-vid');
+  const customLavCanvas = document.getElementById('custom-lav-canvas');
   const customLavImg = document.getElementById('custom-lav-img');
   const focusPackListEl = document.getElementById('focus-pack-list');
   const poseGridEl = document.getElementById('pose-grid');
@@ -2585,6 +2965,122 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   let focusPacks = [];
   let activeFocusPackId = 'xiaojing';
   let activeCustomPack = null;
+
+  const SUPPORTS_HEVC_ALPHA = (() => {
+    try {
+      const probe = document.createElement('video');
+      return probe.canPlayType('video/quicktime; codecs="hvc1"') !== '';
+    } catch {
+      return false;
+    }
+  })();
+
+  function createStackedAlphaRenderer(videoEl, canvasEl) {
+    let gl = null;
+    let tex = null;
+    let active = false;
+    let rafId = 0;
+    let rvfcId = 0;
+
+    function initGl() {
+      if (gl || !canvasEl) return !!gl;
+      gl = canvasEl.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: true })
+        || canvasEl.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: true });
+      if (!gl) return false;
+      const vsSrc =
+        'attribute vec2 a_pos; attribute vec2 a_uv; varying vec2 v_uv;' +
+        'void main(){ gl_Position = vec4(a_pos, 0.0, 1.0); v_uv = a_uv; }';
+      const fsSrc =
+        'precision mediump float; uniform sampler2D u_tex; varying vec2 v_uv;' +
+        'void main(){' +
+        '  vec4 rgb = texture2D(u_tex, vec2(v_uv.x, v_uv.y * 0.5));' +
+        '  float a = texture2D(u_tex, vec2(v_uv.x, 0.5 + v_uv.y * 0.5)).r;' +
+        '  gl_FragColor = vec4(rgb.rgb * a, a);' +
+        '}';
+      const compile = (type, src) => {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return s;
+      };
+      const prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+      gl.linkProgram(prog);
+      gl.useProgram(prog);
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1, 0, 1,
+         1, -1, 1, 1,
+        -1,  1, 0, 0,
+         1,  1, 1, 0,
+      ]), gl.STATIC_DRAW);
+      const aPos = gl.getAttribLocation(prog, 'a_pos');
+      const aUv = gl.getAttribLocation(prog, 'a_uv');
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
+      gl.enableVertexAttribArray(aUv);
+      gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, 16, 8);
+      tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.clearColor(0, 0, 0, 0);
+      return true;
+    }
+
+    function drawFrame() {
+      if (!active || !videoEl || !canvasEl) return;
+      if (videoEl.readyState >= 2 && videoEl.videoWidth > 0 && videoEl.videoHeight > 1) {
+        const tw = videoEl.videoWidth;
+        const th = Math.floor(videoEl.videoHeight / 2);
+        if (canvasEl.width !== tw || canvasEl.height !== th) {
+          canvasEl.width = tw;
+          canvasEl.height = th;
+        }
+        if (initGl() && gl) {
+          gl.viewport(0, 0, tw, th);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.bindTexture(gl.TEXTURE_2D, tex);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, videoEl);
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        }
+      }
+      scheduleNext();
+    }
+
+    function scheduleNext() {
+      if (!active) return;
+      if (videoEl && typeof videoEl.requestVideoFrameCallback === 'function') {
+        rvfcId = videoEl.requestVideoFrameCallback(() => drawFrame());
+      } else {
+        rafId = requestAnimationFrame(drawFrame);
+      }
+    }
+
+    return {
+      start() {
+        if (active) return;
+        active = true;
+        initGl();
+        drawFrame();
+      },
+      stop() {
+        active = false;
+        if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+        if (rvfcId && videoEl && typeof videoEl.cancelVideoFrameCallback === 'function') {
+          try { videoEl.cancelVideoFrameCallback(rvfcId); } catch {}
+          rvfcId = 0;
+        }
+      },
+      isActive() { return active; },
+    };
+  }
+
+  const customStackedPlayer = createStackedAlphaRenderer(customLavVid, customLavCanvas);
 
   function getActiveFocusPack() {
     return focusPacks.find((p) => p.id === activeFocusPackId) || null;
@@ -2596,6 +3092,8 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     activeCustomPack = isCustom ? pack : null;
 
     if (!isCustom) {
+      customStackedPlayer.stop();
+      if (customLavCanvas) customLavCanvas.style.opacity = '0';
       if (customLavVid) {
         try { customLavVid.pause(); } catch {}
         customLavVid.style.opacity = '0';
@@ -2639,6 +3137,8 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     if (entry && entry.url) {
       const isImg = entry.mediaType === 'image' || /\\.(png|webp|gif|jpg|jpeg)(\\?|$)/i.test(entry.url);
       if (isImg) {
+        customStackedPlayer.stop();
+        if (customLavCanvas) customLavCanvas.style.opacity = '0';
         if (customLavVid) {
           try { customLavVid.pause(); } catch {}
           customLavVid.style.opacity = '0';
@@ -2649,13 +3149,44 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
         }
       } else {
         if (customLavImg) customLavImg.style.opacity = '0';
+        const movUrl = entry.movUrl || (/\\.mov(\\?|$)/i.test(entry.url) ? entry.url : '');
+        const isExplicitStacked = entry.alphaLayout === 'stacked' || /[-_](stacked|alpha[-_]?stack|sbs[-_]?alpha)\\.(mp4|webm|mov)(\\?|$)/i.test(entry.url);
+        const stackedUrl = entry.stackedUrl || (isExplicitStacked ? entry.url : '');
+
+        // Hybrid A + B selection:
+        // 1. WebKit/Safari: prefer HEVC-with-Alpha .mov (Strategy A); else fall back to Stacked-Alpha WebGL (Strategy B)
+        // 2. Chromium/Android: use Stacked-Alpha WebGL when clip is explicitly stacked; else native VP9-Alpha .webm
+        let targetUrl = entry.url;
+        let useStackedCanvas = false;
+        if (SUPPORTS_HEVC_ALPHA) {
+          if (movUrl) {
+            targetUrl = movUrl;
+            useStackedCanvas = false;
+          } else if (stackedUrl) {
+            targetUrl = stackedUrl;
+            useStackedCanvas = true;
+          }
+        } else if (isExplicitStacked && stackedUrl) {
+          targetUrl = stackedUrl;
+          useStackedCanvas = true;
+        }
+
         if (customLavVid) {
-          if (customLavVid.getAttribute('src') !== entry.url) {
-            customLavVid.src = entry.url;
+          if (customLavVid.getAttribute('src') !== targetUrl) {
+            customLavVid.src = targetUrl;
             customLavVid.load();
           }
           customLavVid.play().catch(() => {});
-          customLavVid.style.opacity = '1';
+          if (useStackedCanvas && customLavCanvas) {
+            // Keep source <video> decoded in WebKit while compositing via WebGL canvas
+            customLavVid.style.opacity = '0.001';
+            customLavCanvas.style.opacity = '1';
+            customStackedPlayer.start();
+          } else {
+            customStackedPlayer.stop();
+            if (customLavCanvas) customLavCanvas.style.opacity = '0';
+            customLavVid.style.opacity = '1';
+          }
         }
       }
     }

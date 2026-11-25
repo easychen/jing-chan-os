@@ -84,7 +84,52 @@ function sendJson(res, status, data, extraHeaders = {}) {
   res.end(body)
 }
 
-async function serveFileFromDir(res, rootDir, relPath) {
+function sendMediaBuffer(req, res, buf, mime, cacheControl = 'public, max-age=300') {
+  const total = buf.length
+  const baseHeaders = {
+    'content-type': mime,
+    'accept-ranges': 'bytes',
+    'cache-control': cacheControl,
+    'access-control-allow-origin': '*',
+  }
+  const rangeHdr = String(req?.headers?.range || '').trim()
+  if (rangeHdr && rangeHdr.startsWith('bytes=')) {
+    const m = /^bytes=(\d*)-(\d*)$/.exec(rangeHdr)
+    if (m) {
+      let start = m[1] === '' ? 0 : parseInt(m[1], 10)
+      let end = m[2] === '' ? total - 1 : parseInt(m[2], 10)
+      if (m[1] === '' && m[2] !== '') {
+        const suffix = parseInt(m[2], 10)
+        start = Math.max(0, total - suffix)
+        end = total - 1
+      }
+      if (Number.isFinite(start) && Number.isFinite(end) && start >= 0 && start < total) {
+        end = Math.min(total - 1, Math.max(start, end))
+        const slice = buf.subarray(start, end + 1)
+        res.writeHead(206, {
+          ...baseHeaders,
+          'content-range': `bytes ${start}-${end}/${total}`,
+          'content-length': String(slice.length),
+        })
+        res.end(req?.method === 'HEAD' ? undefined : slice)
+        return
+      }
+      res.writeHead(416, {
+        ...baseHeaders,
+        'content-range': `bytes */${total}`,
+      })
+      res.end()
+      return
+    }
+  }
+  res.writeHead(200, {
+    ...baseHeaders,
+    'content-length': String(total),
+  })
+  res.end(req?.method === 'HEAD' ? undefined : buf)
+}
+
+async function serveFileFromDir(res, rootDir, relPath, req = null) {
   const cleanRel = decodeURIComponent(relPath).replace(/^\/+/, '')
   const root = resolve(rootDir)
   const target = resolve(normalize(join(root, cleanRel)))
@@ -96,12 +141,7 @@ async function serveFileFromDir(res, rootDir, relPath) {
   try {
     const bytes = await readFile(target)
     const mime = MIME[extname(target).toLowerCase()] || 'application/octet-stream'
-    res.writeHead(200, {
-      'content-type': mime,
-      'cache-control': target.endsWith('.html') ? 'no-cache' : 'public, max-age=300',
-      'access-control-allow-origin': '*',
-    })
-    res.end(bytes)
+    sendMediaBuffer(req, res, bytes, mime, target.endsWith('.html') ? 'no-cache' : 'public, max-age=300')
     return true
   } catch {
     return false
@@ -658,14 +698,8 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         for (const target of lavCandidates) {
           try {
             const buf = await readFile(target)
-            res.writeHead(200, {
-              'content-type': MIME[extname(target).toLowerCase()] || 'application/octet-stream',
-              'content-length': String(buf.length),
-              'accept-ranges': 'bytes',
-              'cache-control': 'no-cache, must-revalidate',
-              'access-control-allow-origin': '*',
-            })
-            res.end(req.method === 'HEAD' ? undefined : buf)
+            const mime = MIME[extname(target).toLowerCase()] || 'application/octet-stream'
+            sendMediaBuffer(req, res, buf, mime, 'no-cache, must-revalidate')
             return
           } catch {}
         }
@@ -673,7 +707,7 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         return
       }
 
-      const focusMediaMatch = /^\/jphone\/media\/focus\/(noise|music|bg|covers)\/(.+)$/.exec(pathname)
+      const focusMediaMatch = /^\/jphone\/media\/focus\/(noise|noise-bg|music|bg|covers)\/(.+)$/.exec(pathname)
       if (focusMediaMatch && (req.method === 'GET' || req.method === 'HEAD')) {
         const kind = focusMediaMatch[1]
         const rawRel = decodeURIComponent(focusMediaMatch[2])
@@ -1656,7 +1690,7 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
       // Uploaded wallpapers & .panime.png files (served untouched)
       if (pathname.startsWith('/jphone/focus-packs/')) {
         const rel = pathname.slice('/jphone/focus-packs/'.length)
-        if (await serveFileFromDir(res, store.getFocusPacksDir(), rel)) return
+        if (await serveFileFromDir(res, store.getFocusPacksDir(), rel, req)) return
         res.writeHead(404)
         res.end('Focus pack media not found')
         return

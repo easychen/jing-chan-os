@@ -60,19 +60,21 @@ test('M2 Pet: client.js preloads sprites without flash and rotates calm idle mic
   assert.match(src, /decode\(\)/, 'client.js must preload & decode sprites to prevent flash on switch')
 })
 
-test('M2 Focus LAV: multi-pose & multi-zone transparent VP9+Alpha clips exist', async () => {
-  const clips = [
-    'xiaojing_idle.webm',
-    'xiaojing_desk.webm',
-    'xiaojing_glance.webm',
-    'xiaojing_sit.webm',
-    'xiaojing_touch_head.webm',
-    'xiaojing_touch_body.webm',
-    'xiaojing_touch_tail.webm',
+test('M2 Focus LAV: multi-pose & multi-zone transparent VP9+Alpha webm and HEVC+Alpha mov clips exist', async () => {
+  const stems = [
+    'xiaojing_idle',
+    'xiaojing_desk',
+    'xiaojing_glance',
+    'xiaojing_sit',
+    'xiaojing_touch_head',
+    'xiaojing_touch_body',
+    'xiaojing_touch_tail',
   ]
-  for (const clip of clips) {
-    const st = await stat(join(LAV_DIR, clip))
-    assert.ok(st.size > 40_000, `${clip} should be valid encoded VP9+Alpha webm (>40KB)`)
+  for (const stem of stems) {
+    const webmSt = await stat(join(LAV_DIR, `${stem}.webm`))
+    assert.ok(webmSt.size > 40_000, `${stem}.webm should be valid encoded VP9+Alpha webm (>40KB)`)
+    const movSt = await stat(join(LAV_DIR, `${stem}.mov`))
+    assert.ok(movSt.size > 40_000, `${stem}.mov should be valid encoded HEVC+Alpha mov (>40KB)`)
   }
   for (const poster of ['xiaojing_idle.png', 'xiaojing_desk.png', 'xiaojing_glance.png', 'xiaojing_sit.png']) {
     const buf = await readFile(join(LAV_DIR, poster))
