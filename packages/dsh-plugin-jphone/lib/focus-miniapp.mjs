@@ -22,12 +22,12 @@ export const FOCUS_NOISE_TRACKS = [
 ]
 
 export const FOCUS_LOFI_TRACKS = [
-  { id: 'lofi-rain-a', name: '雨的假设 A', en: 'Hypothesis of Rain A', album: '回声重映集', file: '回声重映集_01_雨的假设A_Hypothesis_of_Rain.mp3' },
-  { id: 'lofi-leaves-a', name: '叶的呼吸 A', en: 'Respiration of Leaves A', album: '回声重映集', file: '回声重映集_03_叶的呼吸A_Respiration_of_Leaves.mp3' },
-  { id: 'lofi-waves-a', name: '浪的层叠 A', en: 'Folding the Waves A', album: '回声重映集', file: '回声重映集_05_浪的层叠A_Folding_the_Waves.mp3' },
-  { id: 'lofi-embers-a', name: '篝火余烬 A', en: 'Embers of Civilization A', album: '回声重映集', file: '回声重映集_07_篝火余烬A_Embers_of_Civilization.mp3' },
-  { id: 'lofi-stars-a', name: '星空幻梦 A', en: 'Echoes from Light Years A', album: '回声重映集', file: '回声重映集_11_星空幻梦A_Echoes_from_Light_Years.mp3' },
-  { id: 'lofi-cafe-a', name: '午夜咖啡馆 A', en: 'Solace in Third Space A', album: '回声重映集', file: '回声重映集_17_午夜咖啡馆A_Solace_in_Third_Space.mp3' },
+  { id: 'lofi-rain-a', name: '雨的假设 A', en: 'Hypothesis of Rain A', albumId: 'echoes', album: '回声重映集', cover: '/jphone/media/focus/covers/echoes.jpg', file: '回声重映集_01_雨的假设A_Hypothesis_of_Rain.mp3' },
+  { id: 'lofi-leaves-a', name: '叶的呼吸 A', en: 'Respiration of Leaves A', albumId: 'echoes', album: '回声重映集', cover: '/jphone/media/focus/covers/echoes.jpg', file: '回声重映集_03_叶的呼吸A_Respiration_of_Leaves.mp3' },
+  { id: 'lofi-waves-a', name: '浪的层叠 A', en: 'Folding the Waves A', albumId: 'echoes', album: '回声重映集', cover: '/jphone/media/focus/covers/echoes.jpg', file: '回声重映集_05_浪的层叠A_Folding_the_Waves.mp3' },
+  { id: 'lofi-embers-a', name: '篝火余烬 A', en: 'Embers of Civilization A', albumId: 'echoes', album: '回声重映集', cover: '/jphone/media/focus/covers/echoes.jpg', file: '回声重映集_07_篝火余烬A_Embers_of_Civilization.mp3' },
+  { id: 'lofi-stars-a', name: '星空幻梦 A', en: 'Echoes from Light Years A', albumId: 'echoes', album: '回声重映集', cover: '/jphone/media/focus/covers/echoes.jpg', file: '回声重映集_11_星空幻梦A_Echoes_from_Light_Years.mp3' },
+  { id: 'lofi-cafe-a', name: '午夜咖啡馆 A', en: 'Solace in Third Space A', albumId: 'echoes', album: '回声重映集', cover: '/jphone/media/focus/covers/echoes.jpg', file: '回声重映集_17_午夜咖啡馆A_Solace_in_Third_Space.mp3' },
 ]
 
 export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
@@ -481,44 +481,53 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   }
   .vinyl-wrap {
     position: relative;
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
   }
   .vinyl-ring {
     position: absolute;
     inset: -3px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.42);
+    border-radius: 14px;
+    border: 1.5px solid var(--accent-rim, rgba(56, 189, 248, 0.55));
     opacity: 0;
-    transform: scale(0.92);
+    transform: scale(0.94);
     pointer-events: none;
     transition: opacity 0.28s ease;
   }
   .vinyl-wrap.playing .vinyl-ring {
-    opacity: 0.65;
-    animation: ringPulse 2.2s ease-out infinite;
+    opacity: 0.75;
+    animation: ringPulse 2.4s ease-out infinite;
   }
   @keyframes ringPulse {
     0% { transform: scale(0.96); opacity: 0.75; }
-    100% { transform: scale(1.22); opacity: 0; }
+    100% { transform: scale(1.16); opacity: 0; }
   }
   .vinyl {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 50% 50%, rgba(226,232,240,0.85) 0 18%, #0E1525 22% 54%, #1C2538 58% 82%, rgba(255,255,255,0.28) 98%);
-    border: 1.5px solid rgba(255,255,255,0.34);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0E1525;
+    border: 1px solid rgba(255,255,255,0.28);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    box-shadow: 0 4px 14px var(--accent-glow, rgba(14,165,233,0.34));
+    box-shadow: 0 6px 16px rgba(0,0,0,0.42), 0 0 14px var(--accent-glow, rgba(14,165,233,0.28));
+    transition: transform 0.24s ease;
   }
-  .vinyl.spin { animation: spinVinyl 7s linear infinite; }
+  .vinyl.spin { transform: scale(1.02); }
+  .vinyl-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
   @keyframes spinVinyl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .viz-bars {
     display: inline-flex;
@@ -825,19 +834,234 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   .noise-name { font-size: 12px; font-weight: 600; }
   .noise-vol { width: 100%; margin-top: 6px; accent-color: #38BDF8; height: 4px; }
 
-  /* Lo-Fi Album Track List */
+  /* Lo-Fi Album Showcase & Track List */
+  .mode-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    border: 0.5px solid rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.08);
+    color: rgba(248,250,252,0.88);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+  }
+  .mode-icon-btn:active { transform: scale(0.92); }
+  .mode-icon-btn.accent {
+    background: rgba(56,189,248,0.20);
+    border-color: rgba(56,189,248,0.45);
+    color: #BAE6FD;
+  }
+  .album-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .album-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 6px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10);
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
+  }
+  .album-card:active { transform: scale(0.97); }
+  .album-card.on {
+    background: rgba(56,189,248,0.16);
+    border-color: rgba(56,189,248,0.62);
+    box-shadow: 0 6px 18px rgba(56,189,248,0.16);
+  }
+  .album-cover-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(15,23,42,0.65);
+  }
+  .album-cover-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .album-badge {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(8,13,26,0.78);
+    border: 0.5px solid rgba(255,255,255,0.22);
+    color: #E2E8F0;
+    backdrop-filter: blur(8px);
+  }
+  .album-badge.done {
+    background: rgba(16,185,129,0.85);
+    border-color: rgba(167,243,208,0.65);
+    color: #052E16;
+  }
+  .album-card-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #F8FAFC;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 2px;
+  }
+  .album-hero {
+    display: flex;
+    gap: 11px;
+    padding: 10px 11px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.13);
+    margin-bottom: 10px;
+    align-items: center;
+  }
+  .album-hero-cover {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex: 0 0 60px;
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+  }
+  .album-hero-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .album-hero-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .album-hero-en {
+    font-size: 10.5px;
+    color: rgba(186,230,253,0.78);
+    font-weight: 500;
+  }
+  .album-hero-desc {
+    font-size: 11.5px;
+    color: var(--sub);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .album-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 7px;
+    flex-wrap: wrap;
+  }
+  .album-cta-btn {
+    border: 0.5px solid rgba(56,189,248,0.52);
+    background: linear-gradient(135deg, rgba(56,189,248,0.28), rgba(129,140,248,0.26));
+    color: #F0F9FF;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .album-cta-btn:disabled {
+    opacity: 0.72;
+    cursor: default;
+  }
+  .album-sec-btn {
+    border: 0.5px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08);
+    color: rgba(241,245,249,0.88);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 9px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .album-del-btn {
+    border: 0.5px solid rgba(248,113,113,0.28);
+    background: rgba(248,113,113,0.10);
+    color: #FCA5A5;
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .album-prog-bar {
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .album-prog-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #38BDF8, #818CF8);
+    transition: width 0.25s ease;
+  }
+  .mode-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .mode-pill {
+    border: 0.5px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: var(--sub);
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 6px 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  }
+  .mode-pill.on {
+    background: rgba(56,189,248,0.22);
+    border-color: rgba(56,189,248,0.52);
+    color: #F0F9FF;
+    font-weight: 600;
+  }
   .lofi-row {
     display: flex;
     align-items: center;
-    gap: 11px;
-    padding: 10px 12px;
-    border-radius: 14px;
+    gap: 10px;
+    padding: 9px 11px;
+    border-radius: 13px;
     background: rgba(255,255,255,0.05);
     border: 0.5px solid transparent;
-    margin-bottom: 8px;
+    margin-bottom: 7px;
     cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
   .lofi-row.on { background: rgba(56,189,248,0.20); border-color: rgba(56,189,248,0.52); }
+  .lofi-row.locked { opacity: 0.56; }
   .lofi-eq {
     width: 24px;
     height: 24px;
@@ -847,12 +1071,25 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.65);
+    flex: 0 0 24px;
   }
   .lofi-row.on .lofi-eq { background: #38BDF8; color: #091224; font-weight: 700; }
   .lofi-info { flex: 1; min-width: 0; }
-  .lofi-title { font-size: 13.5px; font-weight: 600; color: #fff; }
-  .lofi-en { font-size: 11px; color: var(--sub); margin-top: 1px; }
+  .lofi-title { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lofi-en { font-size: 10.5px; color: var(--sub); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lofi-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    color: rgba(226,232,240,0.72);
+    flex: 0 0 auto;
+  }
+  .lofi-tag.cloud {
+    background: rgba(56,189,248,0.14);
+    color: #7DD3FC;
+  }
 
   /* Pomodoro settings rows */
   .setting-row {
@@ -926,9 +1163,9 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     <!-- 4. Single Unified Floating Frosted Glass Dock -->
     <div id="player-dock" class="player-dock">
       <div class="player-main">
-        <div id="vinyl-wrap" class="vinyl-wrap">
+        <div id="vinyl-wrap" class="vinyl-wrap" title="查看专辑歌单">
           <div class="vinyl-ring"></div>
-          <div id="vinyl" class="vinyl"><div class="vinyl-hole"></div></div>
+          <div id="vinyl" class="vinyl"><img id="vinyl-cover" class="vinyl-cover" src="/jphone/media/focus/covers/echoes.jpg" alt="专辑封面" /></div>
         </div>
         <div class="track-meta" id="open-audio-meta" style="cursor:pointer">
           <div class="track-title" style="display:flex;align-items:center">
@@ -938,6 +1175,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
           <div id="now-sub" class="track-sub">轻触空白处可收起界面沉浸陪伴</div>
         </div>
         <div class="ctrl-group">
+          <button id="btn-play-mode" class="mode-icon-btn" type="button" title="顺序循环"></button>
           <button id="btn-play-toggle" class="icon-btn play" title="播放/暂停">▶</button>
           <button id="btn-next-track" class="icon-btn" title="下一首">⏭</button>
           <button id="btn-collapse-ui" class="icon-btn" title="沉浸收起" style="width:28px;height:28px;font-size:13px;opacity:0.78">⌄</button>
@@ -966,7 +1204,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
         <div id="pane-audio" class="hidden">
           <div class="seg-bar">
             <button class="seg-btn on" data-audio-tab="noise" type="button">白噪音混音</button>
-            <button class="seg-btn" data-audio-tab="lofi" type="button">Lo-Fi 歌单</button>
+            <button class="seg-btn" data-audio-tab="lofi" type="button">专辑歌单</button>
           </div>
           <div id="sub-noise">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:var(--sub)">
@@ -976,6 +1214,13 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
             <div class="noise-grid" id="noise-grid"></div>
           </div>
           <div id="sub-lofi" class="hidden">
+            <div id="album-strip" class="album-strip"></div>
+            <div id="album-hero"></div>
+            <div id="mode-bar" class="mode-bar">
+              <button class="mode-pill on" data-mode="order" type="button">🔁 顺序循环</button>
+              <button class="mode-pill" data-mode="shuffle" type="button">🔀 随机播放</button>
+              <button class="mode-pill" data-mode="single" type="button">🔂 单曲循环</button>
+            </div>
             <div id="lofi-list"></div>
           </div>
         </div>
@@ -1188,36 +1433,280 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     ? window.jing.audio
     : null;
 
+  // Album & Playback Mode state
+  const PLAY_MODE_LABELS = { order: '顺序循环', shuffle: '随机播放', single: '单曲循环' };
+  const PLAY_MODE_SVGS = {
+    order: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+    shuffle: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
+    single: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none">1</text></svg>',
+  };
+
+  function buildFallbackAlbums() {
+    return [{
+      id: 'echoes',
+      name: '回声重映集',
+      en: 'Echoes Replayed',
+      desc: '雨夜深海与模拟磁带的温柔回响',
+      cover: '/jphone/media/focus/covers/echoes.jpg',
+      totalTracks: LOFIS.length,
+      availableTracks: LOFIS.length,
+      downloadedTracks: 0,
+      builtinTracks: LOFIS.length,
+      totalBytes: 0,
+      downloadedBytes: 0,
+      remainingBytes: 0,
+      complete: true,
+      download: { downloading: false, done: 0, total: 0, currentTrack: '', error: '', failedCount: 0 },
+      tracks: LOFIS.map((t, i) => ({
+        id: t.id,
+        num: String(i + 1).padStart(2, '0'),
+        name: t.name,
+        en: t.en,
+        albumId: 'echoes',
+        album: t.album,
+        cover: t.cover || '/jphone/media/focus/covers/echoes.jpg',
+        builtin: true,
+        available: true,
+        downloaded: false,
+        url: '/jphone/media/focus/music/' + encodeURIComponent(t.file),
+      })),
+    }];
+  }
+
+  let albumsList = buildFallbackAlbums();
+  let selectedAlbumId = 'echoes';
+  let activeQueueAlbumId = 'echoes';
+  let albumPollTimer = null;
+  const previouslyDownloading = new Set();
+
+  function formatMb(bytes) {
+    const mb = (Number(bytes || 0) / 1048576);
+    return mb >= 1 ? (mb.toFixed(1) + ' MB') : '< 1 MB';
+  }
+
+  function trackToHostPayload(track, album) {
+    const al = album || albumsList.find(a => a.id === (track.albumId || selectedAlbumId)) || albumsList[0];
+    const albumName = track.album || (al ? al.name : '回声重映集');
+    const coverUrl = track.cover || track.coverUrl || (al ? al.cover : '/jphone/media/focus/covers/echoes.jpg');
+    const url = track.url || ('/jphone/media/focus/music/' + encodeURIComponent(track.file || ''));
+    return {
+      id: track.id,
+      title: track.name || track.title || 'Lo-Fi',
+      subtitle: albumName + (track.en ? (' · ' + track.en) : ''),
+      url,
+      coverUrl,
+      albumId: track.albumId || (al ? al.id : 'echoes'),
+      albumName,
+    };
+  }
+
+  function getAlbumAvailableQueue(albumId) {
+    const al = albumsList.find(a => a.id === albumId) || albumsList[0];
+    if (!al) return LOFIS.map(t => trackToHostPayload(t));
+    const avail = (al.tracks || []).filter(t => t.available);
+    return avail.map(t => trackToHostPayload(t, al));
+  }
+
   // Fallback local players ONLY if opened outside JPhone host
   const localNoises = new Map();
   let localLofi = null;
-  let localState = { playing: false, hasActiveAudio: false, track: null, noises: {}, sceneName: '深海雨夜' };
+  let localQueue = getAlbumAvailableQueue('echoes');
+  let localPlayMode = (() => {
+    try {
+      const m = localStorage.getItem('jphone_focus_play_mode_v1');
+      if (m === 'order' || m === 'shuffle' || m === 'single') return m;
+    } catch {}
+    return 'order';
+  })();
+  let localState = { playing: false, hasActiveAudio: false, track: null, noises: {}, sceneName: '深海雨夜', playMode: localPlayMode, coverUrl: '/jphone/media/focus/covers/echoes.jpg' };
 
   function getMediaState() {
     if (hostAudio) return hostAudio.getState();
     return localState;
   }
 
-  function playTrackObj(track) {
-    const payload = {
-      id: track.id,
-      title: track.name,
-      subtitle: track.album + ' · ' + track.en,
-      url: '/jphone/media/focus/music/' + encodeURIComponent(track.file),
-    };
+  function getCurrentPlayMode() {
+    const st = getMediaState();
+    const m = st.playMode || localPlayMode || 'order';
+    return (m === 'shuffle' || m === 'single' || m === 'order') ? m : 'order';
+  }
+
+  function setPlayMode(mode, announce = false) {
+    const m = (mode === 'shuffle' || mode === 'single' || mode === 'order') ? mode : 'order';
+    localPlayMode = m;
+    localState.playMode = m;
+    try { localStorage.setItem('jphone_focus_play_mode_v1', m); } catch {}
+    if (hostAudio && typeof hostAudio.setPlayMode === 'function') {
+      hostAudio.setPlayMode(m);
+    } else if (localLofi) {
+      localLofi.loop = (m === 'single');
+    }
+    if (announce) sayBubble('播放模式：' + PLAY_MODE_LABELS[m]);
+    renderAudioUi();
+  }
+
+  function cyclePlayMode() {
+    const order = ['order', 'shuffle', 'single'];
+    const cur = getCurrentPlayMode();
+    const next = order[(order.indexOf(cur) + 1) % order.length];
+    setPlayMode(next, true);
+  }
+
+  function syncQueueForAlbum(albumId) {
+    const q = getAlbumAvailableQueue(albumId);
+    if (!q.length) return q;
+    activeQueueAlbumId = albumId;
+    localQueue = q;
+    if (hostAudio && typeof hostAudio.setQueue === 'function') {
+      hostAudio.setQueue(q, { playMode: getCurrentPlayMode() });
+    }
+    return q;
+  }
+
+  function pickLocalNextTrack(delta, isAutoEnded) {
+    const list = localQueue.length ? localQueue : getAlbumAvailableQueue(activeQueueAlbumId);
+    if (!list.length) return null;
+    if (list.length === 1) return list[0];
+    const curId = localState.track ? localState.track.id : '';
+    const idx = list.findIndex(t => t.id === curId);
+    const mode = getCurrentPlayMode();
+    if (mode === 'single' && isAutoEnded && idx >= 0) return list[idx];
+    if (mode === 'shuffle') {
+      let ni = Math.floor(Math.random() * list.length);
+      if (ni === idx) ni = (ni + 1) % list.length;
+      return list[ni];
+    }
+    const base = idx >= 0 ? idx : (delta > 0 ? -1 : 0);
+    return list[(base + delta + list.length) % list.length];
+  }
+
+  function playTrackObj(track, album) {
+    const al = album || albumsList.find(a => a.id === (track.albumId || selectedAlbumId)) || albumsList[0];
+    if (al) syncQueueForAlbum(al.id);
+    const payload = trackToHostPayload(track, al);
     if (hostAudio) {
       hostAudio.playTrack(payload);
     } else {
-      if (localLofi) { localLofi.pause(); localLofi = null; }
+      if (localLofi) { localLofi.onended = null; localLofi.pause(); localLofi = null; }
       localLofi = new Audio(payload.url);
-      localLofi.loop = true;
+      localLofi.loop = (getCurrentPlayMode() === 'single');
       localLofi.volume = 0.58;
+      localLofi.onended = () => {
+        if (!localState.playing) return;
+        if (getCurrentPlayMode() === 'single') {
+          localLofi.currentTime = 0;
+          localLofi.play().catch(() => {});
+          return;
+        }
+        const next = pickLocalNextTrack(1, true);
+        if (next) playTrackObj(next, al);
+      };
       localLofi.play().catch(() => {});
       localState.track = payload;
+      localState.coverUrl = payload.coverUrl;
       localState.playing = true;
       localState.hasActiveAudio = true;
     }
     renderAudioUi();
+  }
+
+  function playWholeAlbum(albumId) {
+    const al = albumsList.find(a => a.id === albumId);
+    if (!al) return;
+    const avail = (al.tracks || []).filter(t => t.available);
+    if (!avail.length) {
+      startDownloadAlbum(albumId);
+      return;
+    }
+    syncQueueForAlbum(al.id);
+    const mode = getCurrentPlayMode();
+    const startIdx = mode === 'shuffle' ? Math.floor(Math.random() * avail.length) : 0;
+    playTrackObj(avail[startIdx], al);
+    sayBubble('开始播放《' + al.name + '》（' + PLAY_MODE_LABELS[mode] + '）');
+  }
+
+  async function refreshAlbums() {
+    try {
+      let data = null;
+      if (window.jing && window.jing.focus && typeof window.jing.focus.listAlbums === 'function') {
+        data = await window.jing.focus.listAlbums();
+      } else {
+        const res = await fetch('/jphone/api/focus/albums');
+        if (res.ok) data = await res.json();
+      }
+      if (data && Array.isArray(data.albums) && data.albums.length > 0) {
+        albumsList = data.albums;
+        let anyDownloading = false;
+        for (const al of albumsList) {
+          const dl = al.download || {};
+          if (dl.downloading) {
+            anyDownloading = true;
+            previouslyDownloading.add(al.id);
+          } else if (previouslyDownloading.has(al.id)) {
+            previouslyDownloading.delete(al.id);
+            if (al.complete) {
+              sayBubble('《' + al.name + '》完整专辑已下载完成（' + al.totalTracks + ' 首）！');
+              if (activeQueueAlbumId === al.id) syncQueueForAlbum(al.id);
+            } else if (dl.error) {
+              sayBubble('《' + al.name + '》部分曲目下载失败，可点击重试');
+            }
+          }
+        }
+        if (anyDownloading && !albumPollTimer) {
+          albumPollTimer = setInterval(() => { refreshAlbums(); }, 1100);
+        } else if (!anyDownloading && albumPollTimer) {
+          clearInterval(albumPollTimer);
+          albumPollTimer = null;
+        }
+        // Keep active queue refreshed if user already plays this album
+        const st = getMediaState();
+        if (st.track && st.track.albumId && st.track.albumId === activeQueueAlbumId) {
+          const q = getAlbumAvailableQueue(activeQueueAlbumId);
+          if (q.length > (st.queueLength || 0) && hostAudio && typeof hostAudio.setQueue === 'function') {
+            hostAudio.setQueue(q);
+          }
+        }
+        renderAudioUi();
+      }
+    } catch {}
+  }
+
+  async function startDownloadAlbum(albumId) {
+    const al = albumsList.find(a => a.id === albumId);
+    if (!al) return;
+    previouslyDownloading.add(albumId);
+    sayBubble('正在从 GitHub 获取《' + al.name + '》完整专辑…');
+    try {
+      if (window.jing && window.jing.focus && typeof window.jing.focus.downloadAlbum === 'function') {
+        await window.jing.focus.downloadAlbum(albumId);
+      } else {
+        await fetch('/jphone/api/focus/albums/' + encodeURIComponent(albumId) + '/download', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{}',
+        });
+      }
+      if (!albumPollTimer) {
+        albumPollTimer = setInterval(() => { refreshAlbums(); }, 1100);
+      }
+      await refreshAlbums();
+    } catch (err) {
+      sayBubble('专辑下载启动失败：' + (err?.message || '请检查网络'));
+    }
+  }
+
+  async function removeDownloadedAlbum(albumId) {
+    const al = albumsList.find(a => a.id === albumId);
+    if (!al) return;
+    try {
+      if (window.jing && window.jing.focus && typeof window.jing.focus.deleteAlbum === 'function') {
+        await window.jing.focus.deleteAlbum(albumId);
+      } else {
+        await fetch('/jphone/api/focus/albums/' + encodeURIComponent(albumId), { method: 'DELETE' });
+      }
+      sayBubble('已清理《' + al.name + '》本地下载缓存');
+      await refreshAlbums();
+    } catch {}
   }
 
   function setNoiseChannel(item, active, volume) {
@@ -1259,16 +1748,12 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
       return item ? { id: item.id, name: item.name, url: '/jphone/media/focus/noise/' + encodeURIComponent(item.file), volume: vol, active: true } : null;
     }).filter(Boolean);
 
+    syncQueueForAlbum('echoes');
     if (hostAudio) {
       hostAudio.applyScene({
         sceneName: scene.name,
         noises: noiseList,
-        track: {
-          id: track.id,
-          title: track.name,
-          subtitle: track.album + ' · ' + track.en,
-          url: '/jphone/media/focus/music/' + encodeURIComponent(track.file),
-        },
+        track: trackToHostPayload(track),
       });
     } else {
       localNoises.forEach(a => a.pause());
@@ -1537,16 +2022,20 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   });
   document.querySelectorAll('.seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tab = btn.dataset.audioTab;
-      document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('on', b.dataset.audioTab === tab));
-      document.getElementById('sub-noise').classList.toggle('hidden', tab !== 'noise');
-      document.getElementById('sub-lofi').classList.toggle('hidden', tab !== 'lofi');
+      selectAudioSubTab(btn.dataset.audioTab);
     });
   });
   sheetBackdrop.addEventListener('click', closeSheet);
   document.getElementById('sheet-close').addEventListener('click', closeSheet);
   const bgLayer = document.getElementById('bg-layer');
-  document.getElementById('open-audio-meta').addEventListener('click', () => openSheet('audio'));
+  function selectAudioSubTab(tab) {
+    document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('on', b.dataset.audioTab === tab));
+    document.getElementById('sub-noise').classList.toggle('hidden', tab !== 'noise');
+    document.getElementById('sub-lofi').classList.toggle('hidden', tab !== 'lofi');
+    if (tab === 'lofi') refreshAlbums();
+  }
+  document.getElementById('open-audio-meta').addEventListener('click', () => { openSheet('audio'); selectAudioSubTab('lofi'); });
+  document.getElementById('vinyl-wrap').addEventListener('click', () => { openSheet('audio'); selectAudioSubTab('lofi'); });
 
   // Close poses sheet smoothly right after selecting a pose so user enjoys full unobstructed view!
   document.querySelectorAll('.pose-card').forEach(btn => {
@@ -1569,20 +2058,37 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   }
 
   const noiseGrid = document.getElementById('noise-grid');
+  const albumStrip = document.getElementById('album-strip');
+  const albumHero = document.getElementById('album-hero');
   const lofiList = document.getElementById('lofi-list');
   const vinylEl = document.getElementById('vinyl');
+  const vinylCoverEl = document.getElementById('vinyl-cover');
   const nowTitle = document.getElementById('now-title');
   const nowSub = document.getElementById('now-sub');
   const playToggleBtn = document.getElementById('btn-play-toggle');
+  const playModeBtn = document.getElementById('btn-play-mode');
   const tabAudioLbl = document.getElementById('tab-audio-lbl');
+
+  function resolveDisplayCover(st) {
+    if (st && st.track && st.track.coverUrl) return st.track.coverUrl;
+    if (st && st.coverUrl) return st.coverUrl;
+    const playingAlbumId = (st && st.track && st.track.albumId) || selectedAlbumId;
+    const found = albumsList.find(a => a.id === playingAlbumId);
+    return (found && found.cover) || '/jphone/media/focus/covers/echoes.jpg';
+  }
 
   function renderAudioUi() {
     const st = getMediaState();
     const activeNoises = st.noises || {};
     const activeNoiseIds = Object.keys(activeNoises).filter(k => activeNoises[k] && activeNoises[k].active !== false);
+    const mode = getCurrentPlayMode();
 
     const isPlayingNow = !!st.playing;
     vinylEl.classList.toggle('spin', isPlayingNow);
+    const nextCover = resolveDisplayCover(st);
+    if (vinylCoverEl && vinylCoverEl.getAttribute('src') !== nextCover) {
+      vinylCoverEl.setAttribute('src', nextCover);
+    }
     const vinylWrapEl = document.getElementById('vinyl-wrap');
     const vizBarsEl = document.getElementById('viz-bars');
     const lavHaloEl = document.getElementById('lav-halo');
@@ -1590,19 +2096,31 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     if (vizBarsEl) vizBarsEl.classList.toggle('playing', isPlayingNow);
     if (lavHaloEl) lavHaloEl.classList.toggle('playing', isPlayingNow);
     playToggleBtn.textContent = st.playing ? '❚❚' : '▶';
+    if (playModeBtn) {
+      playModeBtn.innerHTML = PLAY_MODE_SVGS[mode] || PLAY_MODE_SVGS.order;
+      playModeBtn.title = '播放模式：' + (PLAY_MODE_LABELS[mode] || '顺序循环');
+      playModeBtn.classList.toggle('accent', mode !== 'order');
+    }
+    document.querySelectorAll('#mode-bar .mode-pill').forEach(btn => {
+      btn.classList.toggle('on', btn.dataset.mode === mode);
+    });
     tabAudioLbl.textContent = activeNoiseIds.length > 0 ? ('声音(' + activeNoiseIds.length + ')') : '声音';
 
     if (st.track && st.track.title) {
       nowTitle.textContent = st.track.title;
       const mixNames = activeNoiseIds.map(id => (activeNoises[id]?.name || id)).slice(0, 3).join(' + ');
-      nowSub.textContent = mixNames ? ('混音：' + mixNames + ' · 后台持续播放') : (st.track.subtitle || '回声重映集 · 后台持续播放');
+      const alLabel = st.track.albumName ? ('《' + st.track.albumName + '》') : '';
+      const modeLabel = PLAY_MODE_LABELS[mode] || '顺序循环';
+      nowSub.textContent = mixNames
+        ? ('混音：' + mixNames + (alLabel ? (' · ' + alLabel) : ''))
+        : ((alLabel ? (alLabel + ' · ') : '') + modeLabel + ' · 后台持续播放');
     } else if (activeNoiseIds.length > 0) {
       const mixNames = activeNoiseIds.map(id => (activeNoises[id]?.name || id)).join(' + ');
       nowTitle.textContent = '白噪音 · ' + mixNames;
       nowSub.textContent = '退出小鲸专注后仍将在后台继续播放';
     } else {
       nowTitle.textContent = '轻触 ▶ 开始深海雨夜陪伴';
-      nowSub.textContent = '轻触空白处收起菜单 · 退出后后台续播';
+      nowSub.textContent = '三张 Origo 专辑 · 顺序/随机/单曲循环';
     }
 
     // Update Noise Tiles
@@ -1629,26 +2147,145 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
       noiseGrid.appendChild(tile);
     }
 
-    // Update Lo-Fi List
+    // Update 3-Album Strip
+    const selectedAlbum = albumsList.find(a => a.id === selectedAlbumId) || albumsList[0];
+    if (selectedAlbum) selectedAlbumId = selectedAlbum.id;
+
+    if (albumStrip) {
+      albumStrip.innerHTML = '';
+      for (const al of albumsList) {
+        const dl = al.download || {};
+        const card = document.createElement('div');
+        card.className = 'album-card' + (al.id === selectedAlbumId ? ' on' : '');
+        const badgeText = dl.downloading
+          ? ('⬇ ' + (dl.done || 0) + '/' + (dl.total || al.totalTracks))
+          : (al.complete ? ('✓ ' + al.totalTracks + '首') : (al.availableTracks + '/' + al.totalTracks));
+        card.innerHTML =
+          '<div class="album-cover-box">' +
+            '<img src="' + al.cover + '" alt="' + al.name + '" loading="lazy" />' +
+            '<span class="album-badge' + (al.complete ? ' done' : '') + '">' + badgeText + '</span>' +
+          '</div>' +
+          '<div class="album-card-name">' + al.name + '</div>';
+        card.addEventListener('click', () => {
+          selectedAlbumId = al.id;
+          renderAudioUi();
+        });
+        albumStrip.appendChild(card);
+      }
+    }
+
+    // Update Selected Album Hero Banner
+    if (albumHero && selectedAlbum) {
+      const dl = selectedAlbum.download || {};
+      const pct = dl.total > 0 ? Math.min(100, Math.round(((dl.done || 0) / dl.total) * 100)) : 0;
+      const statusText = dl.downloading
+        ? ('下载中 ' + (dl.done || 0) + '/' + (dl.total || 0) + (dl.currentTrack ? (' · ' + dl.currentTrack) : ''))
+        : (selectedAlbum.complete
+          ? ('完整专辑已就绪 · 共 ' + selectedAlbum.totalTracks + ' 首')
+          : ('已就绪 ' + selectedAlbum.availableTracks + ' / ' + selectedAlbum.totalTracks + ' 首 · 剩余 ' + formatMb(selectedAlbum.remainingBytes)));
+
+      albumHero.innerHTML = '';
+      const box = document.createElement('div');
+      box.className = 'album-hero';
+      const img = document.createElement('img');
+      img.className = 'album-hero-cover';
+      img.src = selectedAlbum.cover;
+      img.alt = selectedAlbum.name;
+      const info = document.createElement('div');
+      info.className = 'album-hero-info';
+      info.innerHTML =
+        '<div class="album-hero-title"><span>' + selectedAlbum.name + '</span><span class="album-hero-en">' + (selectedAlbum.en || '') + '</span></div>' +
+        '<div class="album-hero-desc">' + statusText + '</div>';
+
+      if (dl.downloading) {
+        const bar = document.createElement('div');
+        bar.className = 'album-prog-bar';
+        bar.innerHTML = '<div class="album-prog-fill" style="width:' + Math.max(6, pct) + '%"></div>';
+        info.appendChild(bar);
+      }
+
+      const acts = document.createElement('div');
+      acts.className = 'album-hero-actions';
+
+      if (selectedAlbum.availableTracks > 0) {
+        const playAllBtn = document.createElement('button');
+        playAllBtn.type = 'button';
+        playAllBtn.className = 'album-sec-btn';
+        playAllBtn.textContent = '▶ 播放专辑';
+        playAllBtn.addEventListener('click', () => playWholeAlbum(selectedAlbum.id));
+        acts.appendChild(playAllBtn);
+      }
+
+      if (!selectedAlbum.complete) {
+        const dlBtn = document.createElement('button');
+        dlBtn.type = 'button';
+        dlBtn.className = 'album-cta-btn';
+        dlBtn.disabled = !!dl.downloading;
+        dlBtn.textContent = dl.downloading
+          ? ('下载中 ' + pct + '%')
+          : ('⬇ 获取完整专辑 (' + formatMb(selectedAlbum.remainingBytes) + ')');
+        dlBtn.addEventListener('click', () => startDownloadAlbum(selectedAlbum.id));
+        acts.appendChild(dlBtn);
+      }
+
+      if (selectedAlbum.downloadedTracks > 0 && !dl.downloading) {
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'album-del-btn';
+        delBtn.textContent = '清理缓存';
+        delBtn.addEventListener('click', () => removeDownloadedAlbum(selectedAlbum.id));
+        acts.appendChild(delBtn);
+      }
+
+      info.appendChild(acts);
+      box.appendChild(img);
+      box.appendChild(info);
+      albumHero.appendChild(box);
+    }
+
+    // Update Selected Album Track List
     lofiList.innerHTML = '';
-    for (const tr of LOFIS) {
+    const tracks = selectedAlbum ? (selectedAlbum.tracks || []) : LOFIS;
+    for (const tr of tracks) {
       const on = !!(st.track && st.track.id === tr.id);
+      const avail = tr.available !== false;
       const row = document.createElement('div');
-      row.className = 'lofi-row' + (on ? ' on' : '');
+      row.className = 'lofi-row' + (on ? ' on' : '') + (avail ? '' : ' locked');
+      const eqLabel = on && st.playing ? '♫' : (avail ? (tr.num || '▶') : '☁');
+      const tagHtml = tr.builtin
+        ? '<span class="lofi-tag">内置</span>'
+        : (avail ? '<span class="lofi-tag">本地</span>' : '<span class="lofi-tag cloud">云端</span>');
       row.innerHTML =
-        '<div class="lofi-eq">' + (on && st.playing ? '♫' : '▶') + '</div>' +
-        '<div class="lofi-info"><div class="lofi-title">' + tr.name + '</div><div class="lofi-en">' + tr.en + '</div></div>';
+        '<div class="lofi-eq">' + eqLabel + '</div>' +
+        '<div class="lofi-info"><div class="lofi-title">' + tr.name + '</div><div class="lofi-en">' + (tr.en || '') + '</div></div>' +
+        tagHtml;
       row.addEventListener('click', () => {
+        if (!avail) {
+          startDownloadAlbum(selectedAlbum.id);
+          return;
+        }
         if (on && st.playing && hostAudio) {
           hostAudio.togglePlay();
           renderAudioUi();
         } else {
-          playTrackObj(tr);
+          playTrackObj(tr, selectedAlbum);
         }
       });
       lofiList.appendChild(row);
     }
   }
+
+  if (playModeBtn) {
+    playModeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cyclePlayMode();
+    });
+  }
+  document.querySelectorAll('#mode-bar .mode-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setPlayMode(btn.dataset.mode, true);
+    });
+  });
 
   playToggleBtn.addEventListener('click', () => {
     const st = getMediaState();
@@ -1666,12 +2303,19 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   });
 
   document.getElementById('btn-next-track').addEventListener('click', () => {
-    const st = getMediaState();
-    const curId = st.track?.id;
-    const idx = LOFIS.findIndex(t => t.id === curId);
-    const next = LOFIS[(idx + 1) % LOFIS.length];
-    playTrackObj(next);
+    if (hostAudio && typeof hostAudio.nextTrack === 'function') {
+      const st = getMediaState();
+      if (!st.queueLength) syncQueueForAlbum(selectedAlbumId);
+      hostAudio.nextTrack();
+    } else {
+      const next = pickLocalNextTrack(1, false);
+      if (next) playTrackObj(next);
+    }
+    renderAudioUi();
   });
+
+  // Hydrate full 3-album catalog from local DSH plugin
+  refreshAlbums();
 
   document.getElementById('btn-stop-all').addEventListener('click', () => {
     if (hostAudio) hostAudio.stopAll();

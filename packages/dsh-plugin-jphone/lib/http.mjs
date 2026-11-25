@@ -6,6 +6,7 @@ import { synthesizeTts, transcribeAsr, runVoiceTurn, consumeVoiceTaskFollowups, 
 import { formatLocalDateKey } from './store.mjs'
 import { isValidServerChanKey, maskServerChanKey, buildAppKeyCreateUrl, sendServerChanNotification, notifyIfEnabled } from './notify.mjs'
 import { fetchWorkshopIndex, inspectGitPackage, installGitPackage } from './workshop.mjs'
+import { listAlbumsWithStatus, startAlbumDownload, deleteDownloadedAlbum, resolveDownloadedAlbumTrackPath } from './focus-albums.mjs'
 import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { extname, join, normalize, resolve, sep } from 'node:path'
@@ -214,6 +215,9 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         return
       } else if (pathname.startsWith('/jphone/api/focus/packs') && req.method !== 'GET' && appCap.appId !== 'jing-focus') {
         replyJson(403, { ok: false, error: 'permission_denied', reason: 'focus_packs_restricted' })
+        return
+      } else if (pathname.startsWith('/jphone/api/focus/albums') && req.method !== 'GET' && appCap.appId !== 'jing-focus') {
+        replyJson(403, { ok: false, error: 'permission_denied', reason: 'focus_albums_restricted' })
         return
       }
     }
@@ -443,6 +447,46 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         replyJson(200, { ok: true, ...res })
         return
       }
+
+      // Focus Lo-Fi Albums (on-demand download from GitHub Releases into local DSH dataDir)
+      if (pathname === '/jphone/api/focus/albums' && req.method === 'GET') {
+        const res = await listAlbumsWithStatus({ dataDir: store.dir, pluginAssetsDir: PLUGIN_ASSETS_DIR })
+        replyJson(200, res)
+        return
+      }
+      const focusAlbumDlMatch = /^\/jphone\/api\/focus\/albums\/([^/]+)\/download$/.exec(pathname)
+      if (focusAlbumDlMatch && req.method === 'POST') {
+        const albumId = decodeURIComponent(focusAlbumDlMatch[1]).trim()
+        let body = {}
+        try { body = await readJsonBody(req) } catch {}
+        const result = await startAlbumDownload(albumId, {
+          dataDir: store.dir,
+          baseUrl: typeof body?.baseUrl === 'string' && body.baseUrl.trim() ? body.baseUrl.trim() : undefined,
+          onProgress: (prog) => {
+            try { wsHub?.broadcast?.({ type: 'focusAlbums:progress', ...prog }) } catch {}
+          },
+        })
+        if (!result.ok) {
+          replyJson(404, result)
+          return
+        }
+        const { _donePromise, ...publicRes } = result
+        replyJson(200, publicRes)
+        return
+      }
+      const focusAlbumDelMatch = /^\/jphone\/api\/focus\/albums\/([^/]+)$/.exec(pathname)
+      if (focusAlbumDelMatch && req.method === 'DELETE') {
+        const albumId = decodeURIComponent(focusAlbumDelMatch[1]).trim()
+        const result = await deleteDownloadedAlbum(albumId, { dataDir: store.dir })
+        if (!result.ok) {
+          replyJson(404, result)
+          return
+        }
+        try { wsHub?.broadcast?.({ type: 'focusAlbums:updated', albumId }) } catch {}
+        const updated = await listAlbumsWithStatus({ dataDir: store.dir, pluginAssetsDir: PLUGIN_ASSETS_DIR })
+        replyJson(200, { ...result, albums: updated.albums })
+        return
+      }
       if (pathname === '/jphone/api/mood' && req.method === 'POST') {
         const body = await readJsonBody(req)
         await store.setMood(body.mood || 'idle', body.moodText)
@@ -629,22 +673,42 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         return
       }
 
-      const focusMediaMatch = /^\/jphone\/media\/focus\/(noise|music|bg)\/(.+)$/.exec(pathname)
+      const focusMediaMatch = /^\/jphone\/media\/focus\/(noise|music|bg|covers)\/(.+)$/.exec(pathname)
       if (focusMediaMatch && (req.method === 'GET' || req.method === 'HEAD')) {
         const kind = focusMediaMatch[1]
-        const fname = decodeURIComponent(focusMediaMatch[2])
-        if (fname.includes('/') || fname.includes('\\') || fname.includes('..')) {
+        const rawRel = decodeURIComponent(focusMediaMatch[2])
+        if (rawRel.includes('\\') || rawRel.includes('..') || rawRel.startsWith('/')) {
           replyJson(400, { ok: false, error: 'invalid_media_name' })
           return
         }
-        const candidateDirs = [
-          join(PLUGIN_ASSETS_DIR, 'focus', kind),
-          characterAssetsDir ? resolve(characterAssetsDir, '..', 'focus', kind) : null,
-          process.env.JPHONE_FOCUS_MEDIA_DIR ? join(process.env.JPHONE_FOCUS_MEDIA_DIR, kind) : null,
-        ]
-        for (const dir of candidateDirs) {
-          if (!dir) continue
-          const target = join(dir, fname)
+        const candidateFiles = []
+        if (kind === 'music' && rawRel.includes('/')) {
+          const parts = rawRel.split('/')
+          if (parts.length !== 2) {
+            replyJson(400, { ok: false, error: 'invalid_media_name' })
+            return
+          }
+          const dlTarget = resolveDownloadedAlbumTrackPath(store.dir, parts[0], parts[1])
+          if (!dlTarget) {
+            replyJson(400, { ok: false, error: 'invalid_media_name' })
+            return
+          }
+          candidateFiles.push(dlTarget)
+        } else {
+          if (rawRel.includes('/')) {
+            replyJson(400, { ok: false, error: 'invalid_media_name' })
+            return
+          }
+          const candidateDirs = [
+            join(PLUGIN_ASSETS_DIR, 'focus', kind),
+            characterAssetsDir ? resolve(characterAssetsDir, '..', 'focus', kind) : null,
+            process.env.JPHONE_FOCUS_MEDIA_DIR ? join(process.env.JPHONE_FOCUS_MEDIA_DIR, kind) : null,
+          ]
+          for (const dir of candidateDirs) {
+            if (dir) candidateFiles.push(join(dir, rawRel))
+          }
+        }
+        for (const target of candidateFiles) {
           try {
             const buf = await readFile(target)
             res.writeHead(200, {
@@ -1084,6 +1148,8 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
       title: "",
       subtitle: "",
       sceneName: "",
+      playMode: "order",
+      queueLength: 0,
       track: null,
       noises: {},
       noiseCount: 0,
@@ -1114,6 +1180,8 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         title: typeof snap.title === "string" ? snap.title : "",
         subtitle: typeof snap.subtitle === "string" ? snap.subtitle : "",
         sceneName: typeof snap.sceneName === "string" ? snap.sceneName : "",
+        playMode: (snap.playMode === "shuffle" || snap.playMode === "single" || snap.playMode === "order") ? snap.playMode : (mediaState.playMode || "order"),
+        queueLength: typeof snap.queueLength === "number" ? snap.queueLength : (mediaState.queueLength || 0),
         track: snap.track && typeof snap.track === "object" ? { ...snap.track } : null,
         noises: snap.noises && typeof snap.noises === "object" ? { ...snap.noises } : {},
         noiseCount: typeof snap.noiseCount === "number" ? snap.noiseCount : 0,
@@ -1125,7 +1193,15 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
       getStateJson: () => JSON.stringify(mediaState),
       playTrack(track) {
         if (!track || !track.url) return;
-        mediaState.track = { id: track.id || "", title: track.title || "Lo-Fi", subtitle: track.subtitle || "", url: track.url };
+        mediaState.track = {
+          id: track.id || "",
+          title: track.title || "Lo-Fi",
+          subtitle: track.subtitle || "",
+          url: track.url,
+          coverUrl: track.coverUrl || "",
+          albumId: track.albumId || "",
+          albumName: track.albumName || "",
+        };
         mediaState.playing = true;
         recomputeMediaDerived();
         emitMedia();
@@ -1147,6 +1223,41 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
       },
       nextTrack() {
         postNative({ type: "jphone:media:nextTrack" });
+      },
+      prevTrack() {
+        postNative({ type: "jphone:media:prevTrack" });
+      },
+      setQueue(tracks, opts) {
+        const list = Array.isArray(tracks) ? tracks.filter((t) => t && t.url).map((t) => ({
+          id: t.id || "",
+          title: t.title || "Lo-Fi",
+          subtitle: t.subtitle || "",
+          url: t.url,
+          coverUrl: t.coverUrl || "",
+          albumId: t.albumId || "",
+          albumName: t.albumName || "",
+        })) : [];
+        mediaState.queueLength = list.length;
+        const o = opts && typeof opts === "object" ? opts : {};
+        if (o.playMode === "order" || o.playMode === "shuffle" || o.playMode === "single") {
+          mediaState.playMode = o.playMode;
+        }
+        emitMedia();
+        postNative({ type: "jphone:media:setQueue", tracks: list, opts: o });
+      },
+      setPlayMode(mode) {
+        const m = (mode === "shuffle" || mode === "single" || mode === "order") ? mode : "order";
+        mediaState.playMode = m;
+        emitMedia();
+        postNative({ type: "jphone:media:setPlayMode", mode: m });
+      },
+      cyclePlayMode() {
+        const order = ["order", "shuffle", "single"];
+        const next = order[(order.indexOf(mediaState.playMode || "order") + 1) % order.length];
+        mediaState.playMode = next;
+        emitMedia();
+        postNative({ type: "jphone:media:setPlayMode", mode: next });
+        return next;
       },
       setNoise(id, opts) {
         if (!id) return;
@@ -1178,7 +1289,15 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         }
         mediaState.noises = nextNoises;
         if (scene.track && scene.track.url) {
-          mediaState.track = { id: scene.track.id || "", title: scene.track.title || "Lo-Fi", subtitle: scene.track.subtitle || "", url: scene.track.url };
+          mediaState.track = {
+            id: scene.track.id || "",
+            title: scene.track.title || "Lo-Fi",
+            subtitle: scene.track.subtitle || "",
+            url: scene.track.url,
+            coverUrl: scene.track.coverUrl || "",
+            albumId: scene.track.albumId || "",
+            albumName: scene.track.albumName || "",
+          };
         }
         mediaState.playing = true;
         recomputeMediaDerived();
@@ -1186,7 +1305,7 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
         postNative({ type: "jphone:media:applyScene", scene });
       },
       stopAll() {
-        mediaState = { playing: false, hasActiveAudio: false, title: "", subtitle: "", sceneName: "", track: null, noises: {}, noiseCount: 0 };
+        mediaState = { playing: false, hasActiveAudio: false, title: "", subtitle: "", sceneName: "", playMode: mediaState.playMode || "order", queueLength: mediaState.queueLength || 0, track: null, noises: {}, noiseCount: 0 };
         emitMedia();
         postNative({ type: "jphone:media:stopAll" });
       },
@@ -1384,6 +1503,21 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
           method: "DELETE",
         });
       },
+      async listAlbums() {
+        return await api("/jphone/api/focus/albums");
+      },
+      async downloadAlbum(albumId) {
+        return await api("/jphone/api/focus/albums/" + encodeURIComponent(albumId) + "/download", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: "{}",
+        });
+      },
+      async deleteAlbum(albumId) {
+        return await api("/jphone/api/focus/albums/" + encodeURIComponent(albumId), {
+          method: "DELETE",
+        });
+      },
     },
     audio: {
       _host() {
@@ -1416,6 +1550,22 @@ export function createJPhoneHttpHandler({ store, orchestrator, wsHub = null, voi
       nextTrack() {
         const h = this._host();
         if (h && typeof h.nextTrack === "function") return h.nextTrack();
+      },
+      prevTrack() {
+        const h = this._host();
+        if (h && typeof h.prevTrack === "function") return h.prevTrack();
+      },
+      setQueue(tracks, opts) {
+        const h = this._host();
+        if (h && typeof h.setQueue === "function") return h.setQueue(tracks, opts);
+      },
+      setPlayMode(mode) {
+        const h = this._host();
+        if (h && typeof h.setPlayMode === "function") return h.setPlayMode(mode);
+      },
+      cyclePlayMode() {
+        const h = this._host();
+        if (h && typeof h.cyclePlayMode === "function") return h.cyclePlayMode();
       },
       setNoise(id, opts) {
         const h = this._host();

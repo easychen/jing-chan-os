@@ -884,11 +884,11 @@ class CompiledApp {
       _13103: () => globalThis.__jphoneMedia.getStateJson(),
       _13104: () => globalThis.__jphoneMedia.togglePlay(),
       _13105: () => globalThis.__jphoneMedia.nextTrack(),
-      _13106: () => globalThis.__jphoneMedia.stopAll(),
-      _13107: () => globalThis.__jphoneMedia.duckForCall(),
-      _13108: () => globalThis.__jphoneMedia.unduckFromCall(),
-      _13109: () => globalThis.__jphoneFocus.getStateJson(),
-      _13110: () => globalThis.__jphoneFocus.toggle(),
+      _13107: () => globalThis.__jphoneMedia.stopAll(),
+      _13108: () => globalThis.__jphoneMedia.duckForCall(),
+      _13109: () => globalThis.__jphoneMedia.unduckFromCall(),
+      _13110: () => globalThis.__jphoneFocus.getStateJson(),
+      _13111: () => globalThis.__jphoneFocus.toggle(),
 
     };
 

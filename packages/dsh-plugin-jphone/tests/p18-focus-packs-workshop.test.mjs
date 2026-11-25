@@ -191,3 +191,113 @@ test('P18 Focus Built-in Audio: all 12 noise tracks and 6 Lo-Fi tracks return 20
     await rm(dir, { recursive: true, force: true })
   }
 })
+
+
+test('P19 Focus Origo Albums: 3 named albums, generated covers, on-demand download, local playback & cache cleanup', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'jphone-p19-albums-'))
+  const fakeMp3 = Buffer.alloc(4096, 0x49)
+  fakeMp3.write('ID3', 0)
+  const mockRemote = createServer((req, res) => {
+    if (req.url && req.url.endsWith('.mp3')) {
+      res.writeHead(200, { 'content-type': 'audio/mpeg', 'content-length': String(fakeMp3.length), connection: 'close' })
+      res.end(fakeMp3)
+      return
+    }
+    res.writeHead(404)
+    res.end('not found')
+  })
+  await new Promise((r) => mockRemote.listen(0, '127.0.0.1', r))
+  const mockBase = `http://127.0.0.1:${mockRemote.address().port}`
+
+  try {
+    const store = await JPhoneStore.open(dir)
+    const handler = createJPhoneHttpHandler({ store, orchestrator: null })
+    const server = createServer(handler)
+    await new Promise((r) => server.listen(0, '127.0.0.1', r))
+    const { port } = server.address()
+    const base = `http://127.0.0.1:${port}`
+    const authHeaders = {}
+    try {
+      // 1. Catalog lists all 3 Origo albums with 76 total tracks (6 built-in ready)
+      const list0 = await fetch(`${base}/jphone/api/focus/albums`, { headers: authHeaders }).then((r) => r.json())
+      assert.equal(list0.ok, true)
+      assert.equal(list0.albums.length, 3)
+      const byId = Object.fromEntries(list0.albums.map((a) => [a.id, a]))
+      assert.equal(byId['echoes'].name, '回声重映集')
+      assert.equal(byId['echoes'].totalTracks, 22)
+      assert.equal(byId['echoes'].availableTracks, 6)
+      assert.equal(byId['echoes'].complete, false)
+      assert.equal(byId['emotion-pawnshop'].name, '情绪典当行')
+      assert.equal(byId['emotion-pawnshop'].totalTracks, 30)
+      assert.equal(byId['emotion-pawnshop'].availableTracks, 0)
+      assert.equal(byId['time-sync'].name, '时光同频器')
+      assert.equal(byId['time-sync'].totalTracks, 24)
+      assert.equal(byId['time-sync'].availableTracks, 0)
+
+      // 2. All 3 Banana-2 generated album covers return 200 image/jpeg
+      for (const al of list0.albums) {
+        const covRes = await fetch(`${base}${al.cover}`)
+        assert.equal(covRes.status, 200, `cover ${al.cover} should be 200`)
+        assert.equal(covRes.headers.get('content-type'), 'image/jpeg')
+        const covBuf = Buffer.from(await covRes.arrayBuffer())
+        assert.ok(covBuf.length > 10_000, `cover ${al.cover} should be >10KB`)
+      }
+
+      // 3. Cross-app sandbox blocks non-focus miniapp from mutating albums
+      const notesHtml = await fetch(`${base}/jphone/miniapp/jing-notes`, { headers: authHeaders }).then((r) => r.text())
+      const capMatch = notesHtml.match(/const APP_TOKEN = "([^"]+)"/)
+      assert.ok(capMatch, 'should extract CAP_TOKEN from miniapp html')
+      const blocked = await fetch(`${base}/jphone/api/focus/albums/echoes/download`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-jphone-app-token': capMatch[1] },
+        body: JSON.stringify({ baseUrl: mockBase }),
+      })
+      assert.equal(blocked.status, 403)
+
+      // 4. Download full 《回声重映集》 from mock remote into local DSH dataDir
+      const dlStart = await fetch(`${base}/jphone/api/focus/albums/echoes/download`, {
+        method: 'POST',
+        headers: { ...authHeaders, 'content-type': 'application/json' },
+        body: JSON.stringify({ baseUrl: mockBase }),
+      }).then((r) => r.json())
+      assert.equal(dlStart.ok, true)
+
+      let finalEchoes = null
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 50))
+        const st = await fetch(`${base}/jphone/api/focus/albums`, { headers: authHeaders }).then((r) => r.json())
+        finalEchoes = st.albums.find((a) => a.id === 'echoes')
+        if (finalEchoes.complete && !finalEchoes.download.downloading) break
+      }
+      assert.equal(finalEchoes.complete, true)
+      assert.equal(finalEchoes.availableTracks, 22)
+      assert.equal(finalEchoes.downloadedTracks, 16)
+
+      // 5. Downloaded track serves 200 audio/mpeg
+      const tr02 = finalEchoes.tracks.find((t) => t.assetName === 'echoes_02.mp3')
+      assert.ok(tr02 && tr02.available && tr02.downloaded)
+      const audioRes = await fetch(`${base}${tr02.url}`)
+      assert.equal(audioRes.status, 200)
+      assert.equal(audioRes.headers.get('content-type'), 'audio/mpeg')
+      assert.equal((await audioRes.arrayBuffer()).byteLength, fakeMp3.length)
+
+      // 6. Deleting downloaded cache preserves 6 built-in starter tracks
+      const delRes = await fetch(`${base}/jphone/api/focus/albums/echoes`, {
+        method: 'DELETE',
+        headers: authHeaders,
+      }).then((r) => r.json())
+      assert.equal(delRes.ok, true)
+      const afterDel = delRes.albums.find((a) => a.id === 'echoes')
+      assert.equal(afterDel.availableTracks, 6)
+      assert.equal(afterDel.downloadedTracks, 0)
+      assert.equal(afterDel.complete, false)
+    } finally {
+      server.closeAllConnections?.()
+      await new Promise((r) => server.close(r))
+    }
+  } finally {
+    mockRemote.closeAllConnections?.()
+    await new Promise((r) => mockRemote.close(r))
+    await rm(dir, { recursive: true, force: true })
+  }
+})

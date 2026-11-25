@@ -572,19 +572,40 @@
 
       // ---- Host-Level Persistent Background Audio Engine (survives Mini-App exit!) ----
       const DEFAULT_LOFI_QUEUE = [
-        { id: 'lofi-rain-a', title: '雨的假设 A', subtitle: '回声重映集 · Hypothesis of Rain A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_01_雨的假设A_Hypothesis_of_Rain.mp3') },
-        { id: 'lofi-leaves-a', title: '叶的呼吸 A', subtitle: '回声重映集 · Respiration of Leaves A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_03_叶的呼吸A_Respiration_of_Leaves.mp3') },
-        { id: 'lofi-waves-a', title: '浪的层叠 A', subtitle: '回声重映集 · Folding the Waves A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_05_浪的层叠A_Folding_the_Waves.mp3') },
-        { id: 'lofi-embers-a', title: '篝火余烬 A', subtitle: '回声重映集 · Embers of Civilization A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_07_篝火余烬A_Embers_of_Civilization.mp3') },
-        { id: 'lofi-stars-a', title: '星空幻梦 A', subtitle: '回声重映集 · Echoes from Light Years A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_11_星空幻梦A_Echoes_from_Light_Years.mp3') },
-        { id: 'lofi-cafe-a', title: '午夜咖啡馆 A', subtitle: '回声重映集 · Solace in Third Space A', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_17_午夜咖啡馆A_Solace_in_Third_Space.mp3') },
+        { id: 'lofi-rain-a', title: '雨的假设 A', subtitle: '回声重映集 · Hypothesis of Rain A', albumId: 'echoes', albumName: '回声重映集', coverUrl: '/jphone/media/focus/covers/echoes.jpg', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_01_雨的假设A_Hypothesis_of_Rain.mp3') },
+        { id: 'lofi-leaves-a', title: '叶的呼吸 A', subtitle: '回声重映集 · Respiration of Leaves A', albumId: 'echoes', albumName: '回声重映集', coverUrl: '/jphone/media/focus/covers/echoes.jpg', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_03_叶的呼吸A_Respiration_of_Leaves.mp3') },
+        { id: 'lofi-waves-a', title: '浪的层叠 A', subtitle: '回声重映集 · Folding the Waves A', albumId: 'echoes', albumName: '回声重映集', coverUrl: '/jphone/media/focus/covers/echoes.jpg', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_05_浪的层叠A_Folding_the_Waves.mp3') },
+        { id: 'lofi-embers-a', title: '篝火余烬 A', subtitle: '回声重映集 · Embers of Civilization A', albumId: 'echoes', albumName: '回声重映集', coverUrl: '/jphone/media/focus/covers/echoes.jpg', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_07_篝火余烬A_Embers_of_Civilization.mp3') },
+        { id: 'lofi-stars-a', title: '星空幻梦 A', subtitle: '回声重映集 · Echoes from Light Years A', albumId: 'echoes', albumName: '回声重映集', coverUrl: '/jphone/media/focus/covers/echoes.jpg', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_11_星空幻梦A_Echoes_from_Light_Years.mp3') },
+        { id: 'lofi-cafe-a', title: '午夜咖啡馆 A', subtitle: '回声重映集 · Solace in Third Space A', albumId: 'echoes', albumName: '回声重映集', coverUrl: '/jphone/media/focus/covers/echoes.jpg', url: '/jphone/media/focus/music/' + encodeURIComponent('回声重映集_17_午夜咖啡馆A_Solace_in_Third_Space.mp3') },
       ];
+      let bgQueue = DEFAULT_LOFI_QUEUE.slice();
+      let bgPlayMode = (() => {
+        try {
+          const saved = localStorage.getItem('jphone_focus_play_mode_v1');
+          if (saved === 'order' || saved === 'shuffle' || saved === 'single') return saved;
+        } catch (_) {}
+        return 'order';
+      })();
       let bgTrackEl = null;
       let bgTrackMeta = null;
       const bgNoises = new Map(); // id -> { el, name, url, volume, active }
       let bgPlaying = false;
       let bgSceneName = '';
       const bgListeners = new Set();
+
+      function normalizeTrackMeta(meta) {
+        if (!meta || !meta.url) return null;
+        return {
+          id: meta.id || '',
+          title: meta.title || 'Lo-Fi',
+          subtitle: meta.subtitle || '',
+          url: meta.url,
+          coverUrl: meta.coverUrl || '',
+          albumId: meta.albumId || '',
+          albumName: meta.albumName || '',
+        };
+      }
 
       function emitMedia() {
         const snap = getMediaStateObj();
@@ -597,6 +618,8 @@
               hasActiveAudio: !!snap.hasActiveAudio,
               title: snap.title || '',
               sceneName: snap.sceneName || '',
+              playMode: snap.playMode || 'order',
+              coverUrl: snap.coverUrl || '',
             }, '*');
           }
         } catch (_) {}
@@ -625,6 +648,11 @@
           title: displayTitle,
           subtitle: displaySub,
           sceneName: bgSceneName,
+          playMode: bgPlayMode,
+          queueLength: bgQueue.length,
+          coverUrl: (bgTrackMeta && bgTrackMeta.coverUrl) || '',
+          albumId: (bgTrackMeta && bgTrackMeta.albumId) || '',
+          albumName: (bgTrackMeta && bgTrackMeta.albumName) || '',
           track: bgTrackMeta,
           noises,
           noiseCount,
@@ -659,20 +687,51 @@
         }
       }
 
+      function pickAdjacentTrack(delta, isAutoEnded) {
+        const list = bgQueue.length > 0 ? bgQueue : DEFAULT_LOFI_QUEUE;
+        if (!list.length) return null;
+        if (list.length === 1) return list[0];
+        const curId = bgTrackMeta ? bgTrackMeta.id : '';
+        const idx = list.findIndex((t) => t.id === curId);
+        if (bgPlayMode === 'single' && isAutoEnded && idx >= 0) {
+          return list[idx];
+        }
+        if (bgPlayMode === 'shuffle') {
+          let nextIdx = Math.floor(Math.random() * list.length);
+          if (nextIdx === idx) nextIdx = (nextIdx + 1) % list.length;
+          return list[nextIdx];
+        }
+        const base = idx >= 0 ? idx : (delta > 0 ? -1 : 0);
+        const nextIdx = (base + delta + list.length) % list.length;
+        return list[nextIdx];
+      }
+
       function playBgTrack(meta) {
-        if (!meta || !meta.url) return;
+        const clean = normalizeTrackMeta(meta);
+        if (!clean) return;
         if (bgTrackEl) {
+          bgTrackEl.onended = null;
           bgTrackEl.pause();
           bgTrackEl.src = '';
           bgTrackEl = null;
         }
-        const a = new Audio(meta.url);
+        const a = new Audio(clean.url);
         a.preload = 'auto';
-        a.loop = true;
+        a.loop = (bgPlayMode === 'single');
         a.volume = 0.56;
-        safePlayAudio(a, meta.title || meta.url);
+        a.onended = () => {
+          if (bgTrackEl !== a || !bgPlaying) return;
+          if (bgPlayMode === 'single') {
+            a.currentTime = 0;
+            safePlayAudio(a, 'single-loop');
+            return;
+          }
+          const next = pickAdjacentTrack(1, true);
+          if (next) playBgTrack(next);
+        };
+        safePlayAudio(a, clean.title || clean.url);
         bgTrackEl = a;
-        bgTrackMeta = { id: meta.id || '', title: meta.title || 'Lo-Fi', subtitle: meta.subtitle || '', url: meta.url };
+        bgTrackMeta = clean;
         bgPlaying = true;
         // Also resume any active noises
         bgNoises.forEach((n) => { if (n.active) safePlayAudio(n.el, n.name || n.url); });
@@ -689,7 +748,8 @@
       function toggleBgPlay() {
         const st = getMediaStateObj();
         if (!st.hasActiveAudio) {
-          playBgTrack(DEFAULT_LOFI_QUEUE[0]);
+          const list = bgQueue.length > 0 ? bgQueue : DEFAULT_LOFI_QUEUE;
+          playBgTrack(list[0]);
           return;
         }
         if (bgPlaying) {
@@ -703,10 +763,43 @@
       }
 
       function nextBgTrack() {
-        const curId = bgTrackMeta ? bgTrackMeta.id : '';
-        const idx = DEFAULT_LOFI_QUEUE.findIndex((t) => t.id === curId);
-        const next = DEFAULT_LOFI_QUEUE[(idx + 1) % DEFAULT_LOFI_QUEUE.length];
-        playBgTrack(next);
+        const next = pickAdjacentTrack(1, false);
+        if (next) playBgTrack(next);
+      }
+
+      function prevBgTrack() {
+        const prev = pickAdjacentTrack(-1, false);
+        if (prev) playBgTrack(prev);
+      }
+
+      function setBgQueue(tracks, opts) {
+        const list = Array.isArray(tracks) ? tracks.map(normalizeTrackMeta).filter(Boolean) : [];
+        if (list.length > 0) {
+          bgQueue = list;
+        }
+        const o = opts && typeof opts === 'object' ? opts : {};
+        if (o.playMode === 'order' || o.playMode === 'shuffle' || o.playMode === 'single') {
+          setBgPlayMode(o.playMode);
+        } else {
+          emitMedia();
+        }
+      }
+
+      function setBgPlayMode(mode) {
+        const m = (mode === 'shuffle' || mode === 'single' || mode === 'order') ? mode : 'order';
+        bgPlayMode = m;
+        try { localStorage.setItem('jphone_focus_play_mode_v1', m); } catch (_) {}
+        if (bgTrackEl) {
+          bgTrackEl.loop = (bgPlayMode === 'single');
+        }
+        emitMedia();
+      }
+
+      function cycleBgPlayMode() {
+        const modes = ['order', 'shuffle', 'single'];
+        const next = modes[(modes.indexOf(bgPlayMode) + 1) % modes.length];
+        setBgPlayMode(next);
+        return next;
       }
 
       function setBgNoise(id, opts) {
@@ -788,6 +881,10 @@
         pauseTrack: pauseBgTrack,
         togglePlay: toggleBgPlay,
         nextTrack: nextBgTrack,
+        prevTrack: prevBgTrack,
+        setQueue: setBgQueue,
+        setPlayMode: setBgPlayMode,
+        cyclePlayMode: cycleBgPlayMode,
         setNoise: setBgNoise,
         applyScene: applyBgScene,
         stopAll: stopBgAll,
@@ -796,6 +893,8 @@
         subscribe: (fn) => { bgListeners.add(fn); return () => bgListeners.delete(fn); },
         _debug: () => ({
           bgPlaying,
+          bgPlayMode,
+          queueLength: bgQueue.length,
           trackUrl: bgTrackMeta ? bgTrackMeta.url : null,
           trackPaused: bgTrackEl ? bgTrackEl.paused : null,
           trackReadyState: bgTrackEl ? bgTrackEl.readyState : null,
