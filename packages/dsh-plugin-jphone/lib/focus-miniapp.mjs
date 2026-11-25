@@ -835,10 +835,14 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
   .noise-vol { width: 100%; margin-top: 6px; accent-color: #38BDF8; height: 4px; }
 
   /* Lo-Fi Album Showcase & Track List */
+  .icon-btn svg, .mode-icon-btn svg, .mode-pill svg, .album-cta-btn svg, .album-sec-btn svg, .album-del-btn svg, .album-badge svg, .lofi-eq svg {
+    display: block;
+    flex-shrink: 0;
+  }
   .mode-icon-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     border: 0.5px solid rgba(255,255,255,0.16);
     background: rgba(255,255,255,0.08);
     color: rgba(248,250,252,0.88);
@@ -905,6 +909,9 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     border: 0.5px solid rgba(255,255,255,0.22);
     color: #E2E8F0;
     backdrop-filter: blur(8px);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
   }
   .album-badge.done {
     background: rgba(16,185,129,0.85);
@@ -994,18 +1001,24 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     color: rgba(241,245,249,0.88);
     font-size: 11px;
     font-weight: 500;
-    padding: 5px 9px;
+    padding: 5px 10px;
     border-radius: 999px;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
   .album-del-btn {
     border: 0.5px solid rgba(248,113,113,0.28);
     background: rgba(248,113,113,0.10);
     color: #FCA5A5;
     font-size: 11px;
-    padding: 5px 8px;
+    padding: 5px 9px;
     border-radius: 999px;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
   .album-prog-bar {
     width: 100%;
@@ -1175,10 +1188,10 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
           <div id="now-sub" class="track-sub">轻触空白处可收起界面沉浸陪伴</div>
         </div>
         <div class="ctrl-group">
-          <button id="btn-play-mode" class="mode-icon-btn" type="button" title="顺序循环"></button>
-          <button id="btn-play-toggle" class="icon-btn play" title="播放/暂停">▶</button>
-          <button id="btn-next-track" class="icon-btn" title="下一首">⏭</button>
-          <button id="btn-collapse-ui" class="icon-btn" title="沉浸收起" style="width:28px;height:28px;font-size:13px;opacity:0.78">⌄</button>
+          <button id="btn-play-mode" class="mode-icon-btn" type="button" title="顺序循环" aria-label="切换播放模式"></button>
+          <button id="btn-play-toggle" class="icon-btn play" type="button" title="播放/暂停" aria-label="播放或暂停"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin-left:1.5px"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+          <button id="btn-next-track" class="icon-btn" type="button" title="下一首" aria-label="下一首"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/><line x1="19" x2="19" y1="5" y2="19"/></svg></button>
+          <button id="btn-collapse-ui" class="icon-btn" type="button" title="沉浸收起" aria-label="沉浸收起" style="width:28px;height:28px;opacity:0.80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
         </div>
       </div>
       <div class="dock-tabs">
@@ -1217,9 +1230,9 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
             <div id="album-strip" class="album-strip"></div>
             <div id="album-hero"></div>
             <div id="mode-bar" class="mode-bar">
-              <button class="mode-pill on" data-mode="order" type="button">🔁 顺序循环</button>
-              <button class="mode-pill" data-mode="shuffle" type="button">🔀 随机播放</button>
-              <button class="mode-pill" data-mode="single" type="button">🔂 单曲循环</button>
+              <button class="mode-pill on" data-mode="order" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span>顺序循环</span></button>
+              <button class="mode-pill" data-mode="shuffle" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg><span>随机播放</span></button>
+              <button class="mode-pill" data-mode="single" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/><path d="M11 10h1v4"/></svg><span>单曲循环</span></button>
             </div>
             <div id="lofi-list"></div>
           </div>
@@ -1435,10 +1448,21 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
 
   // Album & Playback Mode state
   const PLAY_MODE_LABELS = { order: '顺序循环', shuffle: '随机播放', single: '单曲循环' };
+  const LUCIDE = {
+    play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="margin-left:1.5px"><polygon points="6 3 20 12 6 21 6 3"/></svg>',
+    playSm: '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>',
+    pause: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16" rx="1.2"/><rect x="14" y="4" width="4" height="16" rx="1.2"/></svg>',
+    download: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+    downloadXs: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+    checkXs: '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    cloudDown: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg>',
+    audioLines: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg>',
+    trash: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+  };
   const PLAY_MODE_SVGS = {
-    order: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
-    shuffle: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
-    single: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><text x="12" y="15" text-anchor="middle" font-size="8" font-weight="700" fill="currentColor" stroke="none">1</text></svg>',
+    order: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>',
+    shuffle: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>',
+    single: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/><path d="M11 10h1v4"/></svg>',
   };
 
   function buildFallbackAlbums() {
@@ -2095,7 +2119,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
     if (vinylWrapEl) vinylWrapEl.classList.toggle('playing', isPlayingNow);
     if (vizBarsEl) vizBarsEl.classList.toggle('playing', isPlayingNow);
     if (lavHaloEl) lavHaloEl.classList.toggle('playing', isPlayingNow);
-    playToggleBtn.textContent = st.playing ? '❚❚' : '▶';
+    playToggleBtn.innerHTML = st.playing ? LUCIDE.pause : LUCIDE.play;
     if (playModeBtn) {
       playModeBtn.innerHTML = PLAY_MODE_SVGS[mode] || PLAY_MODE_SVGS.order;
       playModeBtn.title = '播放模式：' + (PLAY_MODE_LABELS[mode] || '顺序循环');
@@ -2119,7 +2143,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
       nowTitle.textContent = '白噪音 · ' + mixNames;
       nowSub.textContent = '退出小鲸专注后仍将在后台继续播放';
     } else {
-      nowTitle.textContent = '轻触 ▶ 开始深海雨夜陪伴';
+      nowTitle.textContent = '深海雨夜 · 轻触开始陪伴';
       nowSub.textContent = '三张 Origo 专辑 · 顺序/随机/单曲循环';
     }
 
@@ -2157,13 +2181,13 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
         const dl = al.download || {};
         const card = document.createElement('div');
         card.className = 'album-card' + (al.id === selectedAlbumId ? ' on' : '');
-        const badgeText = dl.downloading
-          ? ('⬇ ' + (dl.done || 0) + '/' + (dl.total || al.totalTracks))
-          : (al.complete ? ('✓ ' + al.totalTracks + '首') : (al.availableTracks + '/' + al.totalTracks));
+        const badgeHtml = dl.downloading
+          ? (LUCIDE.downloadXs + '<span>' + (dl.done || 0) + '/' + (dl.total || al.totalTracks) + '</span>')
+          : (al.complete ? (LUCIDE.checkXs + '<span>' + al.totalTracks + '首</span>') : ('<span>' + al.availableTracks + '/' + al.totalTracks + '</span>'));
         card.innerHTML =
           '<div class="album-cover-box">' +
             '<img src="' + al.cover + '" alt="' + al.name + '" loading="lazy" />' +
-            '<span class="album-badge' + (al.complete ? ' done' : '') + '">' + badgeText + '</span>' +
+            '<span class="album-badge' + (al.complete ? ' done' : '') + '">' + badgeHtml + '</span>' +
           '</div>' +
           '<div class="album-card-name">' + al.name + '</div>';
         card.addEventListener('click', () => {
@@ -2211,7 +2235,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
         const playAllBtn = document.createElement('button');
         playAllBtn.type = 'button';
         playAllBtn.className = 'album-sec-btn';
-        playAllBtn.textContent = '▶ 播放专辑';
+        playAllBtn.innerHTML = LUCIDE.playSm + '<span>播放专辑</span>';
         playAllBtn.addEventListener('click', () => playWholeAlbum(selectedAlbum.id));
         acts.appendChild(playAllBtn);
       }
@@ -2221,9 +2245,9 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
         dlBtn.type = 'button';
         dlBtn.className = 'album-cta-btn';
         dlBtn.disabled = !!dl.downloading;
-        dlBtn.textContent = dl.downloading
-          ? ('下载中 ' + pct + '%')
-          : ('⬇ 获取完整专辑 (' + formatMb(selectedAlbum.remainingBytes) + ')');
+        dlBtn.innerHTML = dl.downloading
+          ? (LUCIDE.download + '<span>下载中 ' + pct + '%</span>')
+          : (LUCIDE.download + '<span>获取完整专辑 (' + formatMb(selectedAlbum.remainingBytes) + ')</span>');
         dlBtn.addEventListener('click', () => startDownloadAlbum(selectedAlbum.id));
         acts.appendChild(dlBtn);
       }
@@ -2232,7 +2256,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
         delBtn.className = 'album-del-btn';
-        delBtn.textContent = '清理缓存';
+        delBtn.innerHTML = LUCIDE.trash + '<span>清理缓存</span>';
         delBtn.addEventListener('click', () => removeDownloadedAlbum(selectedAlbum.id));
         acts.appendChild(delBtn);
       }
@@ -2251,7 +2275,7 @@ export const JING_FOCUS_MINIAPP_HTML = `<!doctype html>
       const avail = tr.available !== false;
       const row = document.createElement('div');
       row.className = 'lofi-row' + (on ? ' on' : '') + (avail ? '' : ' locked');
-      const eqLabel = on && st.playing ? '♫' : (avail ? (tr.num || '▶') : '☁');
+      const eqLabel = on && st.playing ? LUCIDE.audioLines : (avail ? (tr.num || LUCIDE.playSm) : LUCIDE.cloudDown);
       const tagHtml = tr.builtin
         ? '<span class="lofi-tag">内置</span>'
         : (avail ? '<span class="lofi-tag">本地</span>' : '<span class="lofi-tag cloud">云端</span>');
