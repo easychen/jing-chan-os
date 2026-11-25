@@ -631,6 +631,34 @@
         };
       }
 
+      let pendingAudioUnlock = false;
+      function scheduleAudioUnlock() {
+        if (pendingAudioUnlock) return;
+        pendingAudioUnlock = true;
+        const resumeAll = () => {
+          pendingAudioUnlock = false;
+          if (!bgPlaying) return;
+          if (bgTrackEl && bgTrackEl.paused) bgTrackEl.play().catch(() => {});
+          bgNoises.forEach((n) => { if (n.active && n.el.paused) n.el.play().catch(() => {}); });
+        };
+        window.addEventListener('pointerdown', resumeAll, { once: true, capture: true });
+        window.addEventListener('keydown', resumeAll, { once: true, capture: true });
+      }
+      function safePlayAudio(el, label) {
+        if (!el) return;
+        try {
+          const p = el.play();
+          if (p && typeof p.catch === 'function') {
+            p.catch((err) => {
+              console.warn('[jphone:audio] play failed:', label, err && err.name, err && err.message);
+              if (err && err.name === 'NotAllowedError') scheduleAudioUnlock();
+            });
+          }
+        } catch (err) {
+          console.warn('[jphone:audio] play threw:', label, err);
+        }
+      }
+
       function playBgTrack(meta) {
         if (!meta || !meta.url) return;
         if (bgTrackEl) {
@@ -639,14 +667,15 @@
           bgTrackEl = null;
         }
         const a = new Audio(meta.url);
+        a.preload = 'auto';
         a.loop = true;
         a.volume = 0.56;
-        a.play().catch(() => {});
+        safePlayAudio(a, meta.title || meta.url);
         bgTrackEl = a;
         bgTrackMeta = { id: meta.id || '', title: meta.title || 'Lo-Fi', subtitle: meta.subtitle || '', url: meta.url };
         bgPlaying = true;
         // Also resume any active noises
-        bgNoises.forEach((n) => { if (n.active) n.el.play().catch(() => {}); });
+        bgNoises.forEach((n) => { if (n.active) safePlayAudio(n.el, n.name || n.url); });
         emitMedia();
       }
 
@@ -667,8 +696,8 @@
           pauseBgTrack();
         } else {
           bgPlaying = true;
-          if (bgTrackEl) bgTrackEl.play().catch(() => {});
-          bgNoises.forEach((n) => { if (n.active) n.el.play().catch(() => {}); });
+          if (bgTrackEl) safePlayAudio(bgTrackEl, 'resume-track');
+          bgNoises.forEach((n) => { if (n.active) safePlayAudio(n.el, n.name || 'resume-noise'); });
           emitMedia();
         }
       }
@@ -699,8 +728,8 @@
           }
           entry.el.volume = vol;
           bgPlaying = true;
-          entry.el.play().catch(() => {});
-          if (bgTrackEl) bgTrackEl.play().catch(() => {});
+          safePlayAudio(entry.el, entry.name || id);
+          if (bgTrackEl) safePlayAudio(bgTrackEl, 'sync-track');
         } else if (entry) {
           entry.active = false;
           entry.el.pause();
@@ -765,6 +794,18 @@
         duckForCall,
         unduckFromCall,
         subscribe: (fn) => { bgListeners.add(fn); return () => bgListeners.delete(fn); },
+        _debug: () => ({
+          bgPlaying,
+          trackUrl: bgTrackMeta ? bgTrackMeta.url : null,
+          trackPaused: bgTrackEl ? bgTrackEl.paused : null,
+          trackReadyState: bgTrackEl ? bgTrackEl.readyState : null,
+          trackCurrentTime: bgTrackEl ? bgTrackEl.currentTime : null,
+          trackError: bgTrackEl && bgTrackEl.error ? bgTrackEl.error.code : null,
+          noises: Array.from(bgNoises.entries()).map(([id, n]) => ({
+            id, active: n.active, paused: n.el.paused, readyState: n.el.readyState,
+            currentTime: n.el.currentTime, error: n.el.error ? n.el.error.code : null,
+          })),
+        }),
       };
 
       // ---- M3: Host-level persistent Pomodoro timer (survives Mini-App exit!) ----

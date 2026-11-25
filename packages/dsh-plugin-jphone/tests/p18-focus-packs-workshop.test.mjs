@@ -1,3 +1,4 @@
+import { FOCUS_NOISE_TRACKS, FOCUS_LOFI_TRACKS } from '../lib/focus-miniapp.mjs'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtemp, rm } from 'node:fs/promises'
@@ -149,6 +150,38 @@ test('P18 Workshop Character Focus Pack: installGitPackage downloads LAV clips i
     assert.ok(res.focusPack.poses.desk.url.includes('/jphone/focus-packs/starry-cat/'))
     assert.ok(res.focusPack.bgUrl.includes('/jphone/focus-packs/starry-cat/'))
     assert.equal(store.getActiveFocusPackId(), 'starry-cat')
+  } finally {
+    await rm(dir, { recursive: true, force: true })
+  }
+})
+
+test('P18 Focus Built-in Audio: all 12 noise tracks and 6 Lo-Fi tracks return 200 audio/mpeg', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'jphone-p18-audio-'))
+  try {
+    const store = await JPhoneStore.open(dir)
+    const handler = createJPhoneHttpHandler({ store, orchestrator: null })
+    const server = createServer(handler)
+    await new Promise((r) => server.listen(0, '127.0.0.1', r))
+    const { port } = server.address()
+    const base = `http://127.0.0.1:${port}`
+    try {
+      for (const item of FOCUS_NOISE_TRACKS) {
+        const res = await fetch(`${base}/jphone/media/focus/noise/${encodeURIComponent(item.file)}`)
+        assert.equal(res.status, 200, `Noise ${item.id} (${item.file}) should return 200`)
+        assert.equal(res.headers.get('content-type'), 'audio/mpeg')
+        const buf = Buffer.from(await res.arrayBuffer())
+        assert.ok(buf.length > 10_000, `Noise ${item.file} should be >10KB, got ${buf.length}`)
+      }
+      for (const item of FOCUS_LOFI_TRACKS) {
+        const res = await fetch(`${base}/jphone/media/focus/music/${encodeURIComponent(item.file)}`)
+        assert.equal(res.status, 200, `Lo-Fi ${item.id} (${item.file}) should return 200`)
+        assert.equal(res.headers.get('content-type'), 'audio/mpeg')
+        const buf = Buffer.from(await res.arrayBuffer())
+        assert.ok(buf.length > 100_000, `Lo-Fi ${item.file} should be >100KB, got ${buf.length}`)
+      }
+    } finally {
+      await new Promise((r) => server.close(r))
+    }
   } finally {
     await rm(dir, { recursive: true, force: true })
   }

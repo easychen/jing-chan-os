@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-jphone",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "小鲸同学 (JingChan / JPhone) — DeepSeek Harness AI companion plugin featuring desktop pet, voice calls, focus studio, diary & Mini-App workshop",
   "type": "module",
   "main": "./lib/index.js",

@@ -833,6 +833,7 @@ class CompiledApp {
       _1857: x0 => x0.style,
       _1876: (x0,x1) => { x0.onchange = x1 },
       _2334: (x0,x1) => { x0.src = x1 },
+      _2341: (x0,x1) => { x0.allow = x1 },
       _2786: (x0,x1) => { x0.accept = x1 },
       _2800: x0 => x0.files,
       _2826: (x0,x1) => { x0.multiple = x1 },

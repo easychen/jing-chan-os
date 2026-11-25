@@ -99602,6 +99602,7 @@ $S:0}
 A.ayC.prototype={
 $1(a){var s=v.G.document.createElement("iframe")
 s.src=this.a
+s.allow="autoplay; clipboard-read; clipboard-write"
 s.style.border="none"
 s.style.width="100%"
 s.style.height="100%"
